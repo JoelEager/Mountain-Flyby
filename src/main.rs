@@ -16,7 +16,7 @@ mod parse_obj;
 #[derive(Clone, Debug, Copy)]
 pub struct Vertex {
     pub pos: [f32; 4],
-    pub uv: [f32; 2],
+    pub color: [f32; 4],
 }
 
 #[derive(Clone, Debug, Copy)]
@@ -103,8 +103,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             .collect();
 
         // 2. Load the 3D model (vertices and indices)
-        // Parses the OBJ file into vertices with positions/UVs and an index array.
-        let (vertices, index_buffer_data) = parse_obj::parse_ferris_obj();
+        // Parses the OBJ file into vertices with positions/colors and an index array.
+        let (vertices, index_buffer_data) = parse_obj::parse_tree_obj();
 
         // 3. Setup Index Buffer for drawing
         // Creates a device-visible buffer to hold the indices used to draw the model.
@@ -271,217 +271,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             .bind_buffer_memory(uniform_color_buffer, uniform_color_buffer_memory, 0)
             .unwrap();
 
-        // 6. Load texture image and setup image buffer
-        // Decodes a PNG image and loads it into a host-visible staging buffer.
-        let image = image::load_from_memory(include_bytes!("../assets/ferris.png"))
-            .unwrap()
-            .to_rgba8();
-        let (width, height) = image.dimensions();
-        let image_extent = vk::Extent2D { width, height };
-        let image_data = image.into_raw();
-        let image_buffer_info = vk::BufferCreateInfo {
-            size: (size_of::<u8>() * image_data.len()) as u64,
-            usage: vk::BufferUsageFlags::TRANSFER_SRC,
-            sharing_mode: vk::SharingMode::EXCLUSIVE,
-            ..Default::default()
-        };
-        let image_buffer = base.device.create_buffer(&image_buffer_info, None).unwrap();
-        let image_buffer_memory_req = base.device.get_buffer_memory_requirements(image_buffer);
-        let image_buffer_memory_index = find_memorytype_index(
-            &image_buffer_memory_req,
-            &base.device_memory_properties,
-            vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
-        )
-        .expect("Unable to find suitable memorytype for the image buffer.");
-
-        let image_buffer_allocate_info = vk::MemoryAllocateInfo {
-            allocation_size: image_buffer_memory_req.size,
-            memory_type_index: image_buffer_memory_index,
-            ..Default::default()
-        };
-        let image_buffer_memory = base
-            .device
-            .allocate_memory(&image_buffer_allocate_info, None)
-            .unwrap();
-        let image_ptr = base
-            .device
-            .map_memory(
-                image_buffer_memory,
-                0,
-                image_buffer_memory_req.size,
-                vk::MemoryMapFlags::empty(),
-            )
-            .unwrap();
-        let mut image_slice = Align::new(
-            image_ptr,
-            align_of::<u8>() as u64,
-            image_buffer_memory_req.size,
-        );
-        image_slice.copy_from_slice(&image_data);
-        base.device.unmap_memory(image_buffer_memory);
-        base.device
-            .bind_buffer_memory(image_buffer, image_buffer_memory, 0)
-            .unwrap();
-
-        // 7. Create Texture Image for sampling
-        // Creates a device-local image, transitions its layout, and copies the data from the staging buffer.
-        let texture_create_info = vk::ImageCreateInfo {
-            image_type: vk::ImageType::TYPE_2D,
-            format: vk::Format::R8G8B8A8_UNORM,
-            extent: image_extent.into(),
-            mip_levels: 1,
-            array_layers: 1,
-            samples: vk::SampleCountFlags::TYPE_1,
-            tiling: vk::ImageTiling::OPTIMAL,
-            usage: vk::ImageUsageFlags::TRANSFER_DST | vk::ImageUsageFlags::SAMPLED,
-            sharing_mode: vk::SharingMode::EXCLUSIVE,
-            ..Default::default()
-        };
-        let texture_image = base
-            .device
-            .create_image(&texture_create_info, None)
-            .unwrap();
-        let texture_memory_req = base.device.get_image_memory_requirements(texture_image);
-        let texture_memory_index = find_memorytype_index(
-            &texture_memory_req,
-            &base.device_memory_properties,
-            vk::MemoryPropertyFlags::DEVICE_LOCAL,
-        )
-        .expect("Unable to find suitable memory index for depth image.");
-
-        let texture_allocate_info = vk::MemoryAllocateInfo {
-            allocation_size: texture_memory_req.size,
-            memory_type_index: texture_memory_index,
-            ..Default::default()
-        };
-        let texture_memory = base
-            .device
-            .allocate_memory(&texture_allocate_info, None)
-            .unwrap();
-        base.device
-            .bind_image_memory(texture_image, texture_memory, 0)
-            .expect("Unable to bind depth image memory");
-
-        record_submit_commandbuffer(
-            &base.device,
-            base.setup_command_buffer,
-            base.setup_commands_reuse_fence,
-            base.present_queue,
-            &[],
-            &[],
-            &[],
-            |device, texture_command_buffer| {
-                let texture_barrier = vk::ImageMemoryBarrier {
-                    dst_access_mask: vk::AccessFlags::TRANSFER_WRITE,
-                    new_layout: vk::ImageLayout::TRANSFER_DST_OPTIMAL,
-                    image: texture_image,
-                    subresource_range: vk::ImageSubresourceRange {
-                        aspect_mask: vk::ImageAspectFlags::COLOR,
-                        level_count: 1,
-                        layer_count: 1,
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                };
-                device.cmd_pipeline_barrier(
-                    texture_command_buffer,
-                    vk::PipelineStageFlags::BOTTOM_OF_PIPE,
-                    vk::PipelineStageFlags::TRANSFER,
-                    vk::DependencyFlags::empty(),
-                    &[],
-                    &[],
-                    &[texture_barrier],
-                );
-                let buffer_copy_regions = vk::BufferImageCopy::default()
-                    .image_subresource(
-                        vk::ImageSubresourceLayers::default()
-                            .aspect_mask(vk::ImageAspectFlags::COLOR)
-                            .layer_count(1),
-                    )
-                    .image_extent(image_extent.into());
-
-                device.cmd_copy_buffer_to_image(
-                    texture_command_buffer,
-                    image_buffer,
-                    texture_image,
-                    vk::ImageLayout::TRANSFER_DST_OPTIMAL,
-                    &[buffer_copy_regions],
-                );
-                let texture_barrier_end = vk::ImageMemoryBarrier {
-                    src_access_mask: vk::AccessFlags::TRANSFER_WRITE,
-                    dst_access_mask: vk::AccessFlags::SHADER_READ,
-                    old_layout: vk::ImageLayout::TRANSFER_DST_OPTIMAL,
-                    new_layout: vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL,
-                    image: texture_image,
-                    subresource_range: vk::ImageSubresourceRange {
-                        aspect_mask: vk::ImageAspectFlags::COLOR,
-                        level_count: 1,
-                        layer_count: 1,
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                };
-                device.cmd_pipeline_barrier(
-                    texture_command_buffer,
-                    vk::PipelineStageFlags::TRANSFER,
-                    vk::PipelineStageFlags::FRAGMENT_SHADER,
-                    vk::DependencyFlags::empty(),
-                    &[],
-                    &[],
-                    &[texture_barrier_end],
-                );
-            },
-        );
-
-        // 8. Configure Image Sampler
-        // Creates a sampler to define how the texture is read by the shader (filtering, wrapping).
-        let sampler_info = vk::SamplerCreateInfo {
-            mag_filter: vk::Filter::LINEAR,
-            min_filter: vk::Filter::LINEAR,
-            mipmap_mode: vk::SamplerMipmapMode::LINEAR,
-            address_mode_u: vk::SamplerAddressMode::MIRRORED_REPEAT,
-            address_mode_v: vk::SamplerAddressMode::MIRRORED_REPEAT,
-            address_mode_w: vk::SamplerAddressMode::MIRRORED_REPEAT,
-            max_anisotropy: 1.0,
-            border_color: vk::BorderColor::FLOAT_OPAQUE_WHITE,
-            compare_op: vk::CompareOp::NEVER,
-            ..Default::default()
-        };
-
-        let sampler = base.device.create_sampler(&sampler_info, None).unwrap();
-
-        let tex_image_view_info = vk::ImageViewCreateInfo {
-            view_type: vk::ImageViewType::TYPE_2D,
-            format: texture_create_info.format,
-            components: vk::ComponentMapping {
-                r: vk::ComponentSwizzle::R,
-                g: vk::ComponentSwizzle::G,
-                b: vk::ComponentSwizzle::B,
-                a: vk::ComponentSwizzle::A,
-            },
-            subresource_range: vk::ImageSubresourceRange {
-                aspect_mask: vk::ImageAspectFlags::COLOR,
-                level_count: 1,
-                layer_count: 1,
-                ..Default::default()
-            },
-            image: texture_image,
-            ..Default::default()
-        };
-        let tex_image_view = base
-            .device
-            .create_image_view(&tex_image_view_info, None)
-            .unwrap();
-
         // 9. Descriptor Pool & Sets allocation (Uniform & Textures)
-        // Allocates descriptor sets which bind the uniform buffer and the texture sampler to the shader pipeline.
+        // Allocates descriptor sets which bind the uniform buffer to the shader pipeline.
         let descriptor_sizes = [
             vk::DescriptorPoolSize {
                 ty: vk::DescriptorType::UNIFORM_BUFFER,
-                descriptor_count: 1,
-            },
-            vk::DescriptorPoolSize {
-                ty: vk::DescriptorType::COMBINED_IMAGE_SAMPLER,
                 descriptor_count: 1,
             },
         ];
@@ -498,13 +292,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                 descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
                 descriptor_count: 1,
                 stage_flags: vk::ShaderStageFlags::VERTEX,
-                ..Default::default()
-            },
-            vk::DescriptorSetLayoutBinding {
-                binding: 1,
-                descriptor_type: vk::DescriptorType::COMBINED_IMAGE_SAMPLER,
-                descriptor_count: 1,
-                stage_flags: vk::ShaderStageFlags::FRAGMENT,
                 ..Default::default()
             },
         ];
@@ -530,12 +317,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             range: size_of_val(&uniform_color_buffer_data) as u64,
         };
 
-        let tex_descriptor = vk::DescriptorImageInfo {
-            image_layout: vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL,
-            image_view: tex_image_view,
-            sampler,
-        };
-
         let write_desc_sets = [
             vk::WriteDescriptorSet {
                 dst_set: descriptor_sets[0],
@@ -544,21 +325,13 @@ fn main() -> Result<(), Box<dyn Error>> {
                 p_buffer_info: &uniform_color_buffer_descriptor,
                 ..Default::default()
             },
-            vk::WriteDescriptorSet {
-                dst_set: descriptor_sets[0],
-                dst_binding: 1,
-                descriptor_count: 1,
-                descriptor_type: vk::DescriptorType::COMBINED_IMAGE_SAMPLER,
-                p_image_info: &tex_descriptor,
-                ..Default::default()
-            },
         ];
         base.device.update_descriptor_sets(&write_desc_sets, &[]);
 
         // 10. Load compiled shaders and create the Graphics Pipeline
         // Reads the SPIR-V shaders, sets up the pipeline layout, and creates the actual graphics pipeline.
-        let mut vertex_spv_file = Cursor::new(&include_bytes!("../shader/texture/vert.spv")[..]);
-        let mut frag_spv_file = Cursor::new(&include_bytes!("../shader/texture/frag.spv")[..]);
+        let mut vertex_spv_file = Cursor::new(&include_bytes!("../shader/color/vert.spv")[..]);
+        let mut frag_spv_file = Cursor::new(&include_bytes!("../shader/color/frag.spv")[..]);
 
         let vertex_code =
             read_spv(&mut vertex_spv_file).expect("Failed to read vertex shader spv file");
@@ -616,8 +389,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             vk::VertexInputAttributeDescription {
                 location: 1,
                 binding: 0,
-                format: vk::Format::R32G32_SFLOAT,
-                offset: offset_of!(Vertex, uv) as u32,
+                format: vk::Format::R32G32B32A32_SFLOAT,
+                offset: offset_of!(Vertex, color) as u32,
             },
         ];
         let vertex_input_state_info = vk::PipelineVertexInputStateCreateInfo::default()
@@ -873,11 +646,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             .destroy_shader_module(vertex_shader_module, None);
         base.device
             .destroy_shader_module(fragment_shader_module, None);
-        base.device.free_memory(image_buffer_memory, None);
-        base.device.destroy_buffer(image_buffer, None);
-        base.device.free_memory(texture_memory, None);
-        base.device.destroy_image_view(tex_image_view, None);
-        base.device.destroy_image(texture_image, None);
         base.device.free_memory(index_buffer_memory, None);
         base.device.destroy_buffer(index_buffer, None);
         base.device.free_memory(uniform_color_buffer_memory, None);
@@ -889,7 +657,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .destroy_descriptor_set_layout(descriptor_set_layout, None);
         }
         base.device.destroy_descriptor_pool(descriptor_pool, None);
-        base.device.destroy_sampler(sampler, None);
         for framebuffer in framebuffers {
             base.device.destroy_framebuffer(framebuffer, None);
         }
