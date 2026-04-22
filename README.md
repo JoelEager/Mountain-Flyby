@@ -3,12 +3,7 @@ A procedurally generated graphics demo implemented in Rust. Targets [Vulkan](htt
 and tested on an AMD RX 6750, though it should compatible with most GPUs. 
 Developed using [Google Jules](https://jules.google.com/).
 
-All assets were released on BlenderKit under a [free license](https://www.blenderkit.com/docs/licenses/).
-
 ## Setup
-You will need the [large file extension for git](https://git-lfs.com/) to clone 
-this repo.
-
 The `ash` crate requires that the Vulkan API be present on the path. For 
 installation instructions see the crate's read me [here](https://github.com/ash-rs/ash/blob/3eb2ebc6ec35400e69d54ae1ecd862f0999aaba2/README.md#example).
 
