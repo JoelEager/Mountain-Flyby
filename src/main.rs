@@ -19,9 +19,11 @@ pub struct Vertex {
     pub color: [f32; 4],
 }
 
+#[repr(C, align(16))]
 #[derive(Clone, Debug, Copy)]
 pub struct UniformBufferObject {
     pub mvp: cgmath::Matrix4<f32>,
+    pub offset: f32,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -221,6 +223,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         let uniform_color_buffer_data = UniformBufferObject {
             mvp: proj * view * model,
+            offset: 0.0,
         };
         let uniform_color_buffer_info = vk::BufferCreateInfo {
             size: size_of_val(&uniform_color_buffer_data) as u64,
@@ -487,12 +490,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         let _ = base.render_loop(|| {
             let elapsed = start_time.elapsed().as_secs_f32();
 
-            // Flyby effect: translate terrain based on time
+            // Flyby effect: terrain mesh stays fixed, offset translates the terrain generation inside the shader
             let speed = 5.0; // Units per second
-            let model = Matrix4::from_translation(Vector3::new(0.0, -2.0, -elapsed * speed));
+            let model = Matrix4::from_translation(Vector3::new(0.0, -2.0, 0.0));
 
             let ubo = UniformBufferObject {
                 mvp: proj * view * model,
+                offset: elapsed * speed,
             };
             let mut uniform_aligned_slice = Align::new(
                 uniform_ptr,
