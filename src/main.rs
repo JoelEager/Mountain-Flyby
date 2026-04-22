@@ -209,13 +209,13 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         let view = Matrix4::look_at_rh(
             // Eye: Position of the camera in world space
-            Point3::new(0.0, 3.0, 5.0),
+            Point3::new(0.0, 3.0, 10.0),
             // Center: Where the camera is looking (pointing slightly up moves model down)
-            Point3::new(0.0, 0.4, 0.0),
+            Point3::new(0.0, 4.0, 0.0),
             // Up: Which way is "up" for the camera
             Vector3::new(0.0, 1.0, 0.0),
         );
-        let mut proj = cgmath::perspective(Deg(15.0), window_width as f32 / window_height as f32, 0.1, 100.0);
+        let mut proj = cgmath::perspective(Deg(90.0), window_width as f32 / window_height as f32, 0.1, 100.0);
         proj[1][1] = proj[1][1] * -1.0; // Vulkan Y is down
         let model = Matrix4::identity();
 
@@ -271,7 +271,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             .bind_buffer_memory(uniform_color_buffer, uniform_color_buffer_memory, 0)
             .unwrap();
 
-        // 9. Descriptor Pool & Sets allocation (Uniform & Textures)
+        // 6. Descriptor Pool & Sets allocation (Uniform & Textures)
         // Allocates descriptor sets which bind the uniform buffer to the shader pipeline.
         let descriptor_sizes = [
             vk::DescriptorPoolSize {
@@ -328,7 +328,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         ];
         base.device.update_descriptor_sets(&write_desc_sets, &[]);
 
-        // 10. Load compiled shaders and create the Graphics Pipeline
+        // 7. Load compiled shaders and create the Graphics Pipeline
         // Reads the SPIR-V shaders, sets up the pipeline layout, and creates the actual graphics pipeline.
         let mut vertex_spv_file = Cursor::new(&include_bytes!("../shader/color/vert.spv")[..]);
         let mut frag_spv_file = Cursor::new(&include_bytes!("../shader/color/frag.spv")[..]);
@@ -482,7 +482,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let start_time = std::time::Instant::now();
         let mut current_frame: usize = 0;
 
-        // 11. Start the main render loop
+        // 8. Start the main render loop
         // The loop where the MVP matrix is updated, and each frame is recorded and submitted to the queue.
         let _ = base.render_loop(|| {
             let elapsed = start_time.elapsed().as_secs_f32();
@@ -637,7 +637,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         });
         base.device.device_wait_idle().unwrap();
 
-        // 12. Clean up resources after the window is closed
+        // 9. Clean up resources after the window is closed
         for pipeline in graphics_pipelines {
             base.device.destroy_pipeline(pipeline, None);
         }
