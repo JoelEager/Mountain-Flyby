@@ -8,5 +8,4 @@ ash = { version = "0.38.0", features = ["linked", "debug", "std"] }
 ash-window = "0.13.0"
 cgmath = "0.18.0"
 image = "0.25"
-tobj = "4.0.3"
 winit = "0.29"

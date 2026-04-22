@@ -11,7 +11,7 @@ use ash::util::*;
 use ash::vk;
 use mountain_flyby::*;
 
-mod parse_obj;
+mod mountain;
 
 #[derive(Clone, Debug, Copy)]
 pub struct Vertex {
@@ -103,8 +103,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             .collect();
 
         // 2. Load the 3D model (vertices and indices)
-        // Parses the OBJ file into vertices with positions/colors and an index array.
-        let (vertices, index_buffer_data) = parse_obj::parse_tree_obj();
+        // Generates the mountain mesh.
+        let (vertices, index_buffer_data) = mountain::generate_mountain_ridge();
 
         // 3. Setup Index Buffer for drawing
         // Creates a device-visible buffer to hold the indices used to draw the model.
@@ -486,7 +486,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         // The loop where the MVP matrix is updated, and each frame is recorded and submitted to the queue.
         let _ = base.render_loop(|| {
             let elapsed = start_time.elapsed().as_secs_f32();
-            let model = Matrix4::from_angle_y(cgmath::Rad(elapsed));
+
+            // Flyby effect: translate terrain based on time
+            let speed = 5.0; // Units per second
+            let model = Matrix4::from_translation(Vector3::new(0.0, -2.0, -elapsed * speed));
 
             let ubo = UniformBufferObject {
                 mvp: proj * view * model,
