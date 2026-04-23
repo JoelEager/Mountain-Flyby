@@ -97,8 +97,8 @@ void main() {
 
         // Calculate horizon fog
         float dist = length(vec2(px, pz));
-        float fog_factor = smoothstep(40.0, 120.0, dist);
-        vec4 fog_color = vec4(0.53, 0.81, 0.92, 1.0);
+        float fog_factor = smoothstep(100.0, 520.0, dist);
+        vec4 fog_color = vec4(0.3, 0.5, 0.8, 1.0);
 
         final_color = mix(final_color, fog_color, fog_factor);
 
