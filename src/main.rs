@@ -211,7 +211,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         let view = Matrix4::look_at_rh(
             // Eye: Position of the camera in world space
-            Point3::new(0.0, 5.0, 5.0),
+            Point3::new(0.0, 5.0, 0.0),
             // Center: Where the camera is looking (pointing slightly up moves model down)
             Point3::new(0.0, 4.0, -10.0),
             // Up: Which way is "up" for the camera
