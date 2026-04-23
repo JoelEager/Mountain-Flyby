@@ -14,36 +14,12 @@ pub fn generate_mountain_ridge() -> (Vec<Vertex>, Vec<u32>) {
             let px = (x as f32 - width as f32 / 2.0) * scale;
             let pz = (z as f32) * scale;
 
-            // Procedural mountain ridge using sine/cosine
-            // Main ridge in the center
-            let distance_from_center = px.abs() / 16.0;
-
-            // Base height from Perlin-like noise (simplified with trig functions)
-            let mut height = (pz * 0.2).sin() * 2.0 + (pz * 0.5).cos() * 1.0;
-
-            // Shape into a ridge
-            let ridge_factor = (1.0 - distance_from_center).max(0.0);
-            height = height * ridge_factor + ridge_factor * 5.0;
-
-            // Add details
-            height += (px * 1.5 + pz * 0.8).sin() * 0.5;
-            height += (px * 3.0 - pz * 2.0).cos() * 0.25;
-
-            // Height-based coloring
-            let color = if height > 4.5 {
-                // Snow
-                [0.9, 0.9, 0.95, 1.0]
-            } else if height > 2.0 {
-                // Rock
-                [0.5, 0.45, 0.45, 1.0]
-            } else {
-                // Grass / Valley
-                [0.2, 0.5, 0.2, 1.0]
-            };
-
+            // Note: The height (pos.y) and color values are entirely computed
+            // and overridden in the vertex shader (shader/color/color.vert).
+            // We only need to provide the X and Z grid coordinates here.
             vertices.push(Vertex {
-                pos: [px, height, pz, 1.0],
-                color,
+                pos: [px, 0.0, pz, 1.0],
+                color: [0.0, 0.0, 0.0, 0.0],
             });
         }
     }
