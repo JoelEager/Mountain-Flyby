@@ -52,11 +52,9 @@ void main() {
                             + cos(px * 0.05 - world_z * 0.15) * 0.5
                             + sin(px * 0.3 + world_z * 0.2) * 0.25;
 
-        vec4 final_color = vec4(1.0, 1.0, 1.0, 1.0);
+        vec4 final_color = vec4(1.0, 1.0, 1.0, 0.0);
         if (cloud_density > 0.3) {
-            final_color.a = 1.0;
-        } else {
-            final_color.a = 0.0;
+            final_color.a = cloud_density;
         }
 
         o_color = final_color;
@@ -96,7 +94,6 @@ void main() {
         float ambient = 0.3;
 
         final_color.rgb = final_color.rgb * (diffuse + ambient);
-        final_color.a = 1.0; // Ensure terrain is fully opaque
 
         o_color = final_color;
         gl_Position = ubo.mvp * vec4(px, height, pz, 1.0);
