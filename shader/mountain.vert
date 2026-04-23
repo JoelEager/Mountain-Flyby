@@ -17,16 +17,19 @@ layout (binding = 0) uniform UniformBufferObject {
 // Output color to be passed to the fragment shader
 layout (location = 0) out vec4 o_color;
 
-float get_height(float px, float pz, float world_z) {
-    // Ratio to determine amount of mountain
-    float distance_from_valley = abs(abs(px) - 16.0) / 16.0;
+// Constants to control terrain height generation
+const float valley_width = 24.0;
+const float mountain_scale = 9.0;
 
+// Calculate height of a given vertex
+float get_height(float px, float pz, float world_z) {
     // Base height from Perlin-like noise (simplified with trig functions)
     float height = sin(world_z * 0.2) * 2.0 + cos(world_z * 0.5) * 1.0;
 
-    // Shape into a ridge
-    float ridge_factor = max(1.0 - distance_from_valley, 0.0);
-    height = height * ridge_factor + ridge_factor * 5.0;
+    // Add height to form the mountain ridge
+    float mountain_ratio = abs(abs(px) - valley_width) / valley_width;      // closer to 0 -> mountains taller
+    float ridge_factor = max(1.0 - mountain_ratio, 0.0);
+    height = height * ridge_factor + ridge_factor * mountain_scale;         // Increase the amount of noise height when the mountain is taller
 
     // Add details
     height += sin(px * 1.5 + world_z * 0.8) * 0.5;
