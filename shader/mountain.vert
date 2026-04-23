@@ -17,14 +17,7 @@ layout (binding = 0) uniform UniformBufferObject {
 // Output color to be passed to the fragment shader
 layout (location = 0) out vec4 o_color;
 
-// The main function executes once per vertex.
-// It computes procedural height based on world position and time offset,
-// updates the vertex color, and transforms the position using the MVP matrix.
-void main() {
-    float px = pos.x;
-    float pz = pos.z;
-    float world_z = pz + ubo.offset;
-
+float get_height(float px, float pz, float world_z) {
     // Ratio to determine amount of mountain
     float distance_from_valley = abs(abs(px) - 16.0) / 16.0;
 
@@ -39,6 +32,19 @@ void main() {
     height += sin(px * 1.5 + world_z * 0.8) * 0.5;
     height += cos(px * 3.0 - world_z * 2.0) * 0.25;
 
+    return height;
+}
+
+// The main function executes once per vertex.
+// It computes procedural height based on world position and time offset,
+// updates the vertex color, and transforms the position using the MVP matrix.
+void main() {
+    float px = pos.x;
+    float pz = pos.z;
+    float world_z = pz + ubo.offset;
+
+    float height = get_height(px, pz, world_z);
+
     // Height-based coloring
     vec4 final_color;
     if (height > 4.5) {
@@ -51,6 +57,24 @@ void main() {
         // Grass / Valley
         final_color = vec4(0.2, 0.5, 0.2, 1.0);
     }
+
+    // Calculate normals using approximate gradient
+    float eps = 0.1;
+    float h_x = get_height(px + eps, pz, world_z);
+    float h_z = get_height(px, pz + eps, world_z + eps);
+
+    vec3 p = vec3(px, height, pz);
+    vec3 p_x = vec3(px + eps, h_x, pz);
+    vec3 p_z = vec3(px, h_z, pz + eps);
+
+    vec3 normal = normalize(cross(p_z - p, p_x - p));
+
+    // Calculate simple directional lighting
+    vec3 lightDir = normalize(vec3(-1.0, 1.0, -0.5));
+    float diffuse = max(dot(normal, lightDir), 0.0);
+    float ambient = 0.3;
+
+    final_color.rgb = final_color.rgb * (diffuse + ambient);
 
     o_color = final_color;
     gl_Position = ubo.mvp * vec4(px, height, pz, 1.0);
