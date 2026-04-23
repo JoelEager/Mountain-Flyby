@@ -25,14 +25,14 @@ void main() {
     float pz = pos.z;
     float world_z = pz + ubo.offset;
 
-    // width=64, scale=0.5 -> max distance is 16
-    float distance_from_ridge = abs(abs(px) - 8.0) / 8.0;
+    // Ratio to determine amount of mountain
+    float distance_from_valley = abs(abs(px) - 16.0) / 16.0;
 
     // Base height from Perlin-like noise (simplified with trig functions)
     float height = sin(world_z * 0.2) * 2.0 + cos(world_z * 0.5) * 1.0;
 
     // Shape into a ridge
-    float ridge_factor = max(1.0 - distance_from_ridge, 0.0);
+    float ridge_factor = max(1.0 - distance_from_valley, 0.0);
     height = height * ridge_factor + ridge_factor * 5.0;
 
     // Add details
