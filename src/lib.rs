@@ -215,7 +215,7 @@ impl VulkanBase {
                 .build(&event_loop)
                 .unwrap();
             let entry = Entry::linked();
-            let app_name = c"VulkanTriangle";
+            let app_name = c"MountainFlyby";
 
             let layer_names = [c"VK_LAYER_KHRONOS_validation"];
             let layers_names_raw: Vec<*const c_char> = layer_names
