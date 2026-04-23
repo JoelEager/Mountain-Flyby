@@ -95,6 +95,13 @@ void main() {
 
         final_color.rgb = final_color.rgb * (diffuse + ambient);
 
+        // Calculate horizon fog
+        float dist = length(vec2(px, pz));
+        float fog_factor = smoothstep(40.0, 120.0, dist);
+        vec4 fog_color = vec4(0.53, 0.81, 0.92, 1.0);
+
+        final_color = mix(final_color, fog_color, fog_factor);
+
         o_color = final_color;
         gl_Position = ubo.mvp * vec4(px, height, pz, 1.0);
     }
