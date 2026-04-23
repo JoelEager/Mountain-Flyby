@@ -58,7 +58,8 @@ void main() {
         final_color = vec4(0.5, 0.45, 0.45, 1.0);
     } else {
         // Grass / Valley
-        float noise = (sin(px * 1.5 + pz * 0.8) + cos(px * 3.0 - pz * 2.0)) * 0.05;
+        float world_x = px;
+        float noise = (sin(world_x * 1.5 + pz * 0.8) + cos(world_x * 3.0 - pz * 2.0)) * 0.05;
         final_color = vec4(0.2 + noise, 0.5 + noise, 0.2 + noise, 1.0);
     }
 
