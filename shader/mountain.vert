@@ -50,10 +50,10 @@ void main() {
 
     // Height-based coloring
     vec4 final_color;
-    if (height > 4.5) {
+    if (height > 9.5) {
         // Snow
         final_color = vec4(0.9, 0.9, 0.95, 1.0);
-    } else if (height > 2.0) {
+    } else if (height > 5.0) {
         // Rock
         final_color = vec4(0.5, 0.45, 0.45, 1.0);
     } else {
