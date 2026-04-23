@@ -12,17 +12,17 @@ pub fn generate_mountain_ridge() -> (Vec<Vertex>, Vec<u32>) {
     for z in 0..depth {
         for x in 0..width {
             let px = (x as f32 - width as f32 / 2.0) * scale;
-            let pz = (z as f32) * scale;
+            let pz = -(z as f32) * scale;
 
             // Procedural mountain ridge using sine/cosine
-            // Main ridge in the center
-            let distance_from_center = px.abs() / 16.0;
+            // Valley at center, ridges on sides (e.g. at px = -8.0 and px = 8.0)
+            let distance_from_ridge = (px.abs() - 8.0).abs() / 8.0;
 
             // Base height from Perlin-like noise (simplified with trig functions)
             let mut height = (pz * 0.2).sin() * 2.0 + (pz * 0.5).cos() * 1.0;
 
             // Shape into a ridge
-            let ridge_factor = (1.0 - distance_from_center).max(0.0);
+            let ridge_factor = (1.0 - distance_from_ridge).max(0.0);
             height = height * ridge_factor + ridge_factor * 5.0;
 
             // Add details
