@@ -217,6 +217,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             // Up: Which way is "up" for the camera
             Vector3::new(0.0, 1.0, 0.0),
         );
+        // The last two arguments set the near and far clipping planes
         let mut proj = cgmath::perspective(Deg(90.0), window_width as f32 / window_height as f32, 0.1, 500.0);
         proj[1][1] = proj[1][1] * -1.0; // Vulkan Y is down
         let model = Matrix4::identity();
