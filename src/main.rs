@@ -2,9 +2,7 @@
 
 use std::default::Default;
 use std::error::Error;
-use std::ffi;
 use std::io::Cursor;
-use std::mem;
 use std::os::raw::c_void;
 
 use ash::util::*;
@@ -16,7 +14,6 @@ mod mountain;
 #[derive(Clone, Debug, Copy)]
 pub struct Vertex {
     pub pos: [f32; 4],
-    pub color: [f32; 4],
 }
 
 #[repr(C, align(16))]
@@ -218,7 +215,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             Vector3::new(0.0, 1.0, 0.0),
         );
         let mut proj = cgmath::perspective(Deg(90.0), window_width as f32 / window_height as f32, 0.1, 100.0);
-        proj[1][1] = proj[1][1] * -1.0; // Vulkan Y is down
+        proj[1][1] *= -1.0; // Vulkan Y is down
         let model = Matrix4::identity();
 
         let uniform_color_buffer_data = UniformBufferObject {
@@ -362,7 +359,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             .create_pipeline_layout(&layout_create_info, None)
             .unwrap();
 
-        let shader_entry_name = ffi::CStr::from_bytes_with_nul_unchecked(b"main\0");
+        let shader_entry_name = c"main";
         let shader_stage_create_infos = [
             vk::PipelineShaderStageCreateInfo {
                 module: vertex_shader_module,
@@ -387,13 +384,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 location: 0,
                 binding: 0,
                 format: vk::Format::R32G32B32A32_SFLOAT,
-                offset: offset_of!(Vertex, pos) as u32,
-            },
-            vk::VertexInputAttributeDescription {
-                location: 1,
-                binding: 0,
-                format: vk::Format::R32G32B32A32_SFLOAT,
-                offset: offset_of!(Vertex, color) as u32,
+                offset: std::mem::offset_of!(Vertex, pos) as u32,
             },
         ];
         let vertex_input_state_info = vk::PipelineVertexInputStateCreateInfo::default()
@@ -509,7 +500,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .wait_for_fences(
                     &[base.draw_commands_reuse_fences[current_frame]],
                     true,
-                    std::u64::MAX,
+                    u64::MAX,
                 )
                 .expect("Wait for fence failed.");
 
@@ -521,7 +512,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .swapchain_loader
                 .acquire_next_image(
                     base.swapchain,
-                    std::u64::MAX,
+                    u64::MAX,
                     base.present_complete_semaphores[current_frame],
                     vk::Fence::null(),
                 )
@@ -602,8 +593,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                 0,
                 1,
             );
-            // Or draw without the index buffer
-            // device.cmd_draw(draw_command_buffer, 3, 1, 0, 0);
             base.device.cmd_end_render_pass(draw_command_buffer);
             base.device
                 .end_command_buffer(draw_command_buffer)
