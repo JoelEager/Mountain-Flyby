@@ -5,9 +5,6 @@
 // Input vertex position
 layout (location = 0) in vec4 pos;
 
-// Input vertex color
-layout (location = 1) in vec4 color;
-
 // Uniform buffer object containing the Model-View-Projection (MVP) matrix and the time-based offset
 layout (binding = 0) uniform UniformBufferObject {
     mat4 mvp;
