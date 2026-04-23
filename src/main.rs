@@ -27,8 +27,8 @@ pub struct UniformBufferObject {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let window_width = 1000;
-    let window_height = 750;
+    let window_width = 1920;
+    let window_height = 1080;
     let base = VulkanBase::new(window_width, window_height)?;
     
     unsafe {
