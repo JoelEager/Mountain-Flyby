@@ -2,7 +2,7 @@ use crate::Vertex;
 
 pub fn generate_mountain_ridge() -> (Vec<Vertex>, Vec<u32>) {
     let width = 256;
-    let depth = 256;
+    let depth = 1024;
 
     let mut vertices = Vec::with_capacity(width * depth);
     let mut indices = Vec::with_capacity((width - 1) * (depth - 1) * 6);
