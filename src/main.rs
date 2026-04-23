@@ -529,7 +529,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let clear_values = [
                 vk::ClearValue {
                     color: vk::ClearColorValue {
-                        float32: [0.53, 0.81, 0.92, 1.0], // Light blue background
+                        float32: [0.3, 0.5, 0.8, 1.0], // Deeper blue background
                     },
                 },
                 vk::ClearValue {

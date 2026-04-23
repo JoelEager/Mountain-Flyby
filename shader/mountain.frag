@@ -12,5 +12,8 @@ layout (location = 0) out vec4 uFragColor;
 // It's a simple fragment shader which passes through the interpolated
 // color received from the vertex shader to color the pixel.
 void main() {
+    if (o_color.a < 0.5) {
+        discard;
+    }
     uFragColor = o_color;
 }
