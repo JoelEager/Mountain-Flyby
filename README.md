@@ -17,11 +17,6 @@ need to compile them to run the demo. However, if you modify the GLSL shaders
 You can use `glslc` (included in the Vulkan SDK) to compile the shaders:
 
 ```bash
-# Compile texture shaders
-glslc shader/texture/texture.vert -o shader/texture/vert.spv
-glslc shader/texture/texture.frag -o shader/texture/frag.spv
-
-# Compile triangle shaders
-glslc shader/triangle/triangle.vert -o shader/triangle/vert.spv
-glslc shader/triangle/triangle.frag -o shader/triangle/frag.spv
+glslc shader/mountain.vert -o shader/vert.spv
+glslc shader/mountain.frag -o shader/frag.spv
 ```

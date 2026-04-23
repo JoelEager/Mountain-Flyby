@@ -333,8 +333,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // 7. Load compiled shaders and create the Graphics Pipeline
         // Reads the SPIR-V shaders, sets up the pipeline layout, and creates the actual graphics pipeline.
-        let mut vertex_spv_file = Cursor::new(&include_bytes!("../shader/color/vert.spv")[..]);
-        let mut frag_spv_file = Cursor::new(&include_bytes!("../shader/color/frag.spv")[..]);
+        let mut vertex_spv_file = Cursor::new(&include_bytes!("../shader/vert.spv")[..]);
+        let mut frag_spv_file = Cursor::new(&include_bytes!("../shader/frag.spv")[..]);
 
         let vertex_code =
             read_spv(&mut vertex_spv_file).expect("Failed to read vertex shader spv file");

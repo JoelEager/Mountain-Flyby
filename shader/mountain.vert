@@ -25,7 +25,7 @@ void main() {
     float pz = pos.z;
     float world_z = pz + ubo.offset;
 
-    // Width logic equivalent from mountain.rs: width=64, scale=0.5 -> max distance is 16
+    // width=64, scale=0.5 -> max distance is 16
     float distance_from_ridge = abs(abs(px) - 8.0) / 8.0;
 
     // Base height from Perlin-like noise (simplified with trig functions)
