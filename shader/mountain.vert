@@ -46,39 +46,56 @@ void main() {
     float pz = pos.z;
     float world_z = pz + ubo.offset;
 
-    float height = get_height(px, pz, world_z);
+    if (pos.w > 1.5) {
+        // Cloud rendering logic
+        float cloud_density = sin(px * 0.15 + world_z * 0.1) * 0.5
+                            + cos(px * 0.05 - world_z * 0.15) * 0.5
+                            + sin(px * 0.3 + world_z * 0.2) * 0.25;
 
-    // Height-based coloring
-    vec4 final_color;
-    if (height > 9.5) {
-        // Snow
-        final_color = vec4(0.9, 0.9, 0.95, 1.0);
-    } else if (height > 5.0) {
-        // Rock
-        final_color = vec4(0.5, 0.45, 0.45, 1.0);
+        vec4 final_color = vec4(1.0, 1.0, 1.0, 0.0);
+        if (cloud_density > 0.3) {
+            final_color.a = cloud_density;
+        }
+
+        o_color = final_color;
+        // Place clouds high up
+        gl_Position = ubo.mvp * vec4(px, 15.0, pz, 1.0);
     } else {
-        // Grass / Valley
-        final_color = vec4(0.2, 0.5, 0.2, 1.0);
+        // Mountain terrain logic
+        float height = get_height(px, pz, world_z);
+
+        // Height-based coloring
+        vec4 final_color;
+        if (height > 9.5) {
+            // Snow
+            final_color = vec4(0.9, 0.9, 0.95, 1.0);
+        } else if (height > 5.0) {
+            // Rock
+            final_color = vec4(0.5, 0.45, 0.45, 1.0);
+        } else {
+            // Grass / Valley
+            final_color = vec4(0.2, 0.5, 0.2, 1.0);
+        }
+
+        // Calculate normals using approximate gradient
+        float eps = 0.1;
+        float h_x = get_height(px + eps, pz, world_z);
+        float h_z = get_height(px, pz + eps, world_z + eps);
+
+        vec3 p = vec3(px, height, pz);
+        vec3 p_x = vec3(px + eps, h_x, pz);
+        vec3 p_z = vec3(px, h_z, pz + eps);
+
+        vec3 normal = normalize(cross(p_z - p, p_x - p));
+
+        // Calculate simple directional lighting
+        vec3 lightDir = normalize(vec3(-1.0, 1.0, -0.5));
+        float diffuse = max(dot(normal, lightDir), 0.0);
+        float ambient = 0.3;
+
+        final_color.rgb = final_color.rgb * (diffuse + ambient);
+
+        o_color = final_color;
+        gl_Position = ubo.mvp * vec4(px, height, pz, 1.0);
     }
-
-    // Calculate normals using approximate gradient
-    float eps = 0.1;
-    float h_x = get_height(px + eps, pz, world_z);
-    float h_z = get_height(px, pz + eps, world_z + eps);
-
-    vec3 p = vec3(px, height, pz);
-    vec3 p_x = vec3(px + eps, h_x, pz);
-    vec3 p_z = vec3(px, h_z, pz + eps);
-
-    vec3 normal = normalize(cross(p_z - p, p_x - p));
-
-    // Calculate simple directional lighting
-    vec3 lightDir = normalize(vec3(-1.0, 1.0, -0.5));
-    float diffuse = max(dot(normal, lightDir), 0.0);
-    float ambient = 0.3;
-
-    final_color.rgb = final_color.rgb * (diffuse + ambient);
-
-    o_color = final_color;
-    gl_Position = ubo.mvp * vec4(px, height, pz, 1.0);
 }
