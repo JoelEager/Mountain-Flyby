@@ -1,8 +1,8 @@
 use crate::Vertex;
 
 pub fn generate_mountain_ridge() -> (Vec<Vertex>, Vec<u32>) {
-    let width = 64;
-    let depth = 128;
+    let width = 512;
+    let depth = 256;
 
     let mut vertices = Vec::with_capacity(width * depth);
     let mut indices = Vec::with_capacity((width - 1) * (depth - 1) * 6);
@@ -16,7 +16,7 @@ pub fn generate_mountain_ridge() -> (Vec<Vertex>, Vec<u32>) {
 
             // Procedural mountain ridge using sine/cosine
             // Main ridge in the center
-            let distance_from_center = (x as f32 - width as f32 / 2.0).abs() / (width as f32 / 2.0);
+            let distance_from_center = px.abs() / 16.0;
 
             // Base height from Perlin-like noise (simplified with trig functions)
             let mut height = (pz * 0.2).sin() * 2.0 + (pz * 0.5).cos() * 1.0;
