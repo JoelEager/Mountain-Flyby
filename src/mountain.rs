@@ -15,12 +15,10 @@ pub fn generate_mountain_ridge() -> (Vec<Vertex>, Vec<u32>) {
             let px = (x as f32 - width as f32 / 2.0) * scale;
             let pz = -(z as f32) * scale;
 
-            // Note: The height (pos.y) and color values are entirely computed
-            // and overridden in the vertex shader (shader/mountain.vert).
+            // Note: The height (pos.y) and color values are entirely computed in the vertex shader (shader/mountain.vert).
             // We only need to provide the X and Z grid coordinates here.
             vertices.push(Vertex {
                 pos: [px, 0.0, pz, 1.0],
-                color: [0.0, 0.0, 0.0, 0.0],
             });
         }
     }
@@ -33,7 +31,6 @@ pub fn generate_mountain_ridge() -> (Vec<Vertex>, Vec<u32>) {
 
             vertices.push(Vertex {
                 pos: [px, 0.0, pz, 2.0],
-                color: [1.0, 1.0, 1.0, 1.0],
             });
         }
     }
