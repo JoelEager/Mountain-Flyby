@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let window_width = 1920;
     let window_height = 1080;
     let base = VulkanBase::new(window_width, window_height)?;
-    
+
     unsafe {
         // 1. Pipeline, Renderpass & Framebuffers Setup
         // Define the attachments used in the render pass (color and depth).
@@ -204,7 +204,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // 5. Uniform Buffer setup (MVP matrix)
         // Creates a buffer to pass the Model-View-Projection matrix to the shader.
-        use cgmath::{Matrix4, Point3, Vector3, SquareMatrix, Deg};
+        use cgmath::{Deg, Matrix4, Point3, SquareMatrix, Vector3};
 
         let view = Matrix4::look_at_rh(
             // Eye: Position of the camera in world space
@@ -215,7 +215,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             Vector3::new(0.0, 1.0, 0.0),
         );
         // The last two arguments set the near and far clipping planes
-        let mut proj = cgmath::perspective(Deg(90.0), window_width as f32 / window_height as f32, 0.1, 500.0);
+        let mut proj = cgmath::perspective(
+            Deg(90.0),
+            window_width as f32 / window_height as f32,
+            0.1,
+            500.0,
+        );
         proj[1][1] *= -1.0; // Vulkan Y is down
 
         let model = Matrix4::from_translation(Vector3::new(0.0, -2.0, 0.0));
@@ -275,12 +280,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // 6. Descriptor Pool & Sets allocation (Uniform & Textures)
         // Allocates descriptor sets which bind the uniform buffer to the shader pipeline.
-        let descriptor_sizes = [
-            vk::DescriptorPoolSize {
-                ty: vk::DescriptorType::UNIFORM_BUFFER,
-                descriptor_count: 1,
-            },
-        ];
+        let descriptor_sizes = [vk::DescriptorPoolSize {
+            ty: vk::DescriptorType::UNIFORM_BUFFER,
+            descriptor_count: 1,
+        }];
         let descriptor_pool_info = vk::DescriptorPoolCreateInfo::default()
             .pool_sizes(&descriptor_sizes)
             .max_sets(1);
@@ -289,14 +292,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             .device
             .create_descriptor_pool(&descriptor_pool_info, None)
             .unwrap();
-        let desc_layout_bindings = [
-            vk::DescriptorSetLayoutBinding {
-                descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
-                descriptor_count: 1,
-                stage_flags: vk::ShaderStageFlags::VERTEX,
-                ..Default::default()
-            },
-        ];
+        let desc_layout_bindings = [vk::DescriptorSetLayoutBinding {
+            descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
+            descriptor_count: 1,
+            stage_flags: vk::ShaderStageFlags::VERTEX,
+            ..Default::default()
+        }];
         let descriptor_info =
             vk::DescriptorSetLayoutCreateInfo::default().bindings(&desc_layout_bindings);
 
@@ -319,15 +320,13 @@ fn main() -> Result<(), Box<dyn Error>> {
             range: size_of_val(&uniform_color_buffer_data) as u64,
         };
 
-        let write_desc_sets = [
-            vk::WriteDescriptorSet {
-                dst_set: descriptor_sets[0],
-                descriptor_count: 1,
-                descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
-                p_buffer_info: &uniform_color_buffer_descriptor,
-                ..Default::default()
-            },
-        ];
+        let write_desc_sets = [vk::WriteDescriptorSet {
+            dst_set: descriptor_sets[0],
+            descriptor_count: 1,
+            descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
+            p_buffer_info: &uniform_color_buffer_descriptor,
+            ..Default::default()
+        }];
         base.device.update_descriptor_sets(&write_desc_sets, &[]);
 
         // 7. Load compiled shaders and create the Graphics Pipeline
@@ -381,14 +380,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             stride: size_of::<Vertex>() as u32,
             input_rate: vk::VertexInputRate::VERTEX,
         }];
-        let vertex_input_attribute_descriptions = [
-            vk::VertexInputAttributeDescription {
-                location: 0,
-                binding: 0,
-                format: vk::Format::R32G32B32A32_SFLOAT,
-                offset: std::mem::offset_of!(Vertex, pos) as u32,
-            },
-        ];
+        let vertex_input_attribute_descriptions = [vk::VertexInputAttributeDescription {
+            location: 0,
+            binding: 0,
+            format: vk::Format::R32G32B32A32_SFLOAT,
+            offset: std::mem::offset_of!(Vertex, pos) as u32,
+        }];
         let vertex_input_state_info = vk::PipelineVertexInputStateCreateInfo::default()
             .vertex_attribute_descriptions(&vertex_input_attribute_descriptions)
             .vertex_binding_descriptions(&vertex_input_binding_descriptions);
@@ -571,8 +568,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                 vk::PipelineBindPoint::GRAPHICS,
                 graphic_pipeline,
             );
-            base.device.cmd_set_viewport(draw_command_buffer, 0, &viewports);
-            base.device.cmd_set_scissor(draw_command_buffer, 0, &scissors);
+            base.device
+                .cmd_set_viewport(draw_command_buffer, 0, &viewports);
+            base.device
+                .cmd_set_scissor(draw_command_buffer, 0, &scissors);
             base.device.cmd_bind_vertex_buffers(
                 draw_command_buffer,
                 0,
@@ -601,7 +600,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let wait_semaphores = [base.present_complete_semaphores[current_frame]];
             let wait_mask = [vk::PipelineStageFlags::BOTTOM_OF_PIPE];
             let signal_semaphores = [base.rendering_complete_semaphores[present_index as usize]];
-            let command_buffers = vec![draw_command_buffer];
+            let command_buffers = [draw_command_buffer];
 
             let submit_info = vk::SubmitInfo::default()
                 .wait_semaphores(&wait_semaphores)

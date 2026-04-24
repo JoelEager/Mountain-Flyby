@@ -96,15 +96,28 @@ mod tests {
 
         // Check if all indices are valid
         for &index in &indices {
-            assert!((index as usize) < vertices.len(), "Index {} is out of bounds (max {})", index, vertices.len());
+            assert!(
+                (index as usize) < vertices.len(),
+                "Index {} is out of bounds (max {})",
+                index,
+                vertices.len()
+            );
         }
 
         // Check vertex w components
         for i in 0..(width * depth) {
-            assert_eq!(vertices[i].pos[3], 1.0, "Vertex {} should be ground (w=1.0)", i);
+            assert_eq!(
+                vertices[i].pos[3], 1.0,
+                "Vertex {} should be ground (w=1.0)",
+                i
+            );
         }
         for i in (width * depth)..(width * depth * 2) {
-            assert_eq!(vertices[i].pos[3], 2.0, "Vertex {} should be clouds (w=2.0)", i);
+            assert_eq!(
+                vertices[i].pos[3], 2.0,
+                "Vertex {} should be clouds (w=2.0)",
+                i
+            );
         }
 
         // Check some coordinate ranges
@@ -115,9 +128,28 @@ mod tests {
         let max_z = 0.0;
 
         for (i, v) in vertices.iter().enumerate() {
-            assert!(v.pos[0] >= min_x - 0.0001 && v.pos[0] <= max_x + 0.0001, "Vertex {} X coord {} out of range [{}, {}]", i, v.pos[0], min_x, max_x);
-            assert!(v.pos[1] == 0.0, "Vertex {} Y coord {} should be 0.0", i, v.pos[1]);
-            assert!(v.pos[2] >= min_z - 0.0001 && v.pos[2] <= max_z + 0.0001, "Vertex {} Z coord {} out of range [{}, {}]", i, v.pos[2], min_z, max_z);
+            assert!(
+                v.pos[0] >= min_x - 0.0001 && v.pos[0] <= max_x + 0.0001,
+                "Vertex {} X coord {} out of range [{}, {}]",
+                i,
+                v.pos[0],
+                min_x,
+                max_x
+            );
+            assert!(
+                v.pos[1] == 0.0,
+                "Vertex {} Y coord {} should be 0.0",
+                i,
+                v.pos[1]
+            );
+            assert!(
+                v.pos[2] >= min_z - 0.0001 && v.pos[2] <= max_z + 0.0001,
+                "Vertex {} Z coord {} out of range [{}, {}]",
+                i,
+                v.pos[2],
+                min_z,
+                max_z
+            );
         }
     }
 

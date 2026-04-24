@@ -12,9 +12,10 @@ use std::{
 };
 
 use ash::{
+    Device, Entry, Instance,
     ext::debug_utils,
     khr::{surface, swapchain},
-    vk, Device, Entry, Instance,
+    vk,
 };
 use winit::{
     event::{ElementState, Event, KeyEvent, WindowEvent},
@@ -474,8 +475,12 @@ impl VulkanBase {
                 vk::FenceCreateInfo::default().flags(vk::FenceCreateFlags::SIGNALED);
 
             let draw_commands_reuse_fences = vec![
-                device.create_fence(&fence_create_info, None).expect("Create fence failed."),
-                device.create_fence(&fence_create_info, None).expect("Create fence failed."),
+                device
+                    .create_fence(&fence_create_info, None)
+                    .expect("Create fence failed."),
+                device
+                    .create_fence(&fence_create_info, None)
+                    .expect("Create fence failed."),
             ];
             let setup_commands_reuse_fence = device
                 .create_fence(&fence_create_info, None)
@@ -535,13 +540,21 @@ impl VulkanBase {
             let semaphore_create_info = vk::SemaphoreCreateInfo::default();
 
             let present_complete_semaphores = vec![
-                device.create_semaphore(&semaphore_create_info, None).unwrap(),
-                device.create_semaphore(&semaphore_create_info, None).unwrap(),
+                device
+                    .create_semaphore(&semaphore_create_info, None)
+                    .unwrap(),
+                device
+                    .create_semaphore(&semaphore_create_info, None)
+                    .unwrap(),
             ];
 
             let mut rendering_complete_semaphores = vec![];
             for _ in 0..present_images.len() {
-                rendering_complete_semaphores.push(device.create_semaphore(&semaphore_create_info, None).unwrap());
+                rendering_complete_semaphores.push(
+                    device
+                        .create_semaphore(&semaphore_create_info, None)
+                        .unwrap(),
+                );
             }
 
             Ok(Self {
