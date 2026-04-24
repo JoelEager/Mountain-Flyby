@@ -1,6 +1,6 @@
 use crate::Vertex;
 
-pub fn generate_mountain_ridge() -> (Vec<Vertex>, Vec<u32>) {
+pub fn generate_landscape() -> (Vec<Vertex>, Vec<u32>) {
     let width = 256;
     let depth = 1024;
 
@@ -17,7 +17,7 @@ pub fn generate_mountain_ridge() -> (Vec<Vertex>, Vec<u32>) {
                 let px = (x as f32 - width as f32 / 2.0) * scale;
                 let pz = -(z as f32) * scale;
 
-                // Note: The height (pos.y) and color values are entirely computed in the vertex shader (shader/mountain.vert).
+                // Note: The height (pos.y) and color values are entirely computed in the vertex shader (shader/landscape.vert).
                 // We only need to provide the X and Z grid coordinates here.
                 vertices.push(Vertex {
                     pos: [px, 0.0, pz, w],
@@ -57,8 +57,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_mountain_ridge_generation() {
-        let (vertices, indices) = generate_mountain_ridge();
+    fn test_landscape_generation() {
+        let (vertices, indices) = generate_landscape();
 
         let width = 256;
         let depth = 1024;
@@ -128,7 +128,7 @@ mod tests {
 
     #[test]
     fn test_vertex_separation() {
-        let (vertices, _) = generate_mountain_ridge();
+        let (vertices, _) = generate_landscape();
         let width = 256;
         let depth = 1024;
 
