@@ -209,6 +209,7 @@ impl VulkanBase {
             let event_loop = EventLoop::new()?;
             let window = WindowBuilder::new()
                 .with_title("Mountain Flyby Demo")
+                .with_position(winit::dpi::LogicalPosition::new(10.0, 10.0))
                 .with_inner_size(winit::dpi::LogicalSize::new(
                     f64::from(window_width),
                     f64::from(window_height),
