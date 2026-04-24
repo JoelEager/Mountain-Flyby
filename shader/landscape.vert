@@ -15,8 +15,8 @@ layout (binding = 0) uniform UniformBufferObject {
 layout (location = 0) out vec4 o_color;
 
 // Constants to control terrain height generation
-const float valley_width = 24.0;
-const float mountain_scale = 9.0;
+const float VALLEY_WIDTH = 24.0;
+const float MOUNTAIN_SCALE = 9.0;
 
 // Calculate height of a given vertex
 float get_height(float px, float pz, float world_z) {
@@ -26,9 +26,9 @@ float get_height(float px, float pz, float world_z) {
 
     // Add height to form the mountain ridge
     float modified_px = px + sin(world_z * 0.3) * 0.6 + cos(world_z * 0.8) * 1.2;   // Apply some world z to x so the center of the valley varies
-    float mountain_ratio = (abs(modified_px) - valley_width) / valley_width;        // closer to 0 -> mountains taller
+    float mountain_ratio = (abs(modified_px) - VALLEY_WIDTH) / VALLEY_WIDTH;        // closer to 0 -> mountains taller
     float ridge_factor = max(1.0 - abs(mountain_ratio), 0.0);
-    height = height * ridge_factor + ridge_factor * mountain_scale;                 // Increase the amount of noise height when the mountain is taller
+    height = height * ridge_factor + ridge_factor * MOUNTAIN_SCALE;                 // Increase the amount of noise height when the mountain is taller
 
     // Add details
     height += sin(px * 1.5 + world_z * 0.8) * 0.13;
@@ -52,14 +52,13 @@ void main() {
                             + cos(px * 0.05 - world_z * 0.15) * 0.5
                             + sin(px * 0.3 + world_z * 0.2) * 0.25;
 
-        vec4 final_color = vec4(1.0, 1.0, 1.0, 0.0);
+        o_color = vec4(1.0, 1.0, 1.0, 0.0);
         float cloud_height = 15.0;
         if (cloud_density > 0.3) {
-            final_color.a = cloud_density;
+            o_color.a = cloud_density;
             cloud_height += (cloud_density - 0.3) * 5.0;
         }
 
-        o_color = final_color;
         // Place clouds high up
         gl_Position = ubo.mvp * vec4(px, cloud_height, pz, 1.0);
     } else {
@@ -70,12 +69,11 @@ void main() {
         vec4 snow_color = vec4(0.9, 0.9, 0.95, 1.0);
         vec4 rock_color = vec4(0.5, 0.45, 0.45, 1.0);
 
-        // Grass / Valley
         float noise = (sin(px * 1.5 + world_z * 0.8) + cos(px * 3.0 - world_z * 2.0)) * 0.08;
         vec4 grass_color = vec4(0.2 + noise, 0.5 + noise, 0.2 + noise, 1.0);
 
-        vec4 final_color = mix(grass_color, rock_color, smoothstep(6.0, 7.0, height));
-        final_color = mix(final_color, snow_color, smoothstep(9.0, 10.0, height));
+        o_color = mix(grass_color, rock_color, smoothstep(6.0, 7.0, height));
+        o_color = mix(o_color, snow_color, smoothstep(9.0, 10.0, height));
 
         // Calculate normals using approximate gradient
         float eps = 0.1;
@@ -93,16 +91,15 @@ void main() {
         float diffuse = max(dot(normal, lightDir), 0.0);
         float ambient = 0.3;
 
-        final_color.rgb = final_color.rgb * (diffuse + ambient);
+        o_color.rgb = o_color.rgb * (diffuse + ambient);
 
         // Calculate horizon fog
         float dist = length(vec2(px, pz));
         float fog_factor = smoothstep(100.0, 520.0, dist);
         vec4 fog_color = vec4(0.3, 0.5, 0.8, 1.0);
 
-        final_color = mix(final_color, fog_color, fog_factor);
+        o_color = mix(o_color, fog_color, fog_factor);
 
-        o_color = final_color;
         gl_Position = ubo.mvp * vec4(px, height, pz, 1.0);
     }
 }
