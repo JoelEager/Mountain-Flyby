@@ -204,7 +204,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // 5. Uniform Buffer setup (MVP matrix)
         // Creates a buffer to pass the Model-View-Projection matrix to the shader.
-        use cgmath::{Matrix4, Point3, Vector3, SquareMatrix, Deg};
+        use cgmath::{Matrix4, Point3, Vector3, Deg};
 
         let view = Matrix4::look_at_rh(
             // Eye: Position of the camera in world space
