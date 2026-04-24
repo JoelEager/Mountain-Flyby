@@ -217,7 +217,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         // The last two arguments set the near and far clipping planes
         let mut proj = cgmath::perspective(Deg(90.0), window_width as f32 / window_height as f32, 0.1, 500.0);
         proj[1][1] *= -1.0; // Vulkan Y is down
-        let speed = 5.0; // Units per second
+
         let model = Matrix4::from_translation(Vector3::new(0.0, -2.0, 0.0));
 
         let uniform_color_buffer_data = UniformBufferObject {
@@ -475,11 +475,12 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         let graphic_pipeline = graphics_pipelines[0];
 
+        // 8. Start the main render loop
+        // The loop where the MVP matrix is updated, and each frame is recorded and submitted to the queue.
+        let speed = 5.0; // Units per second
         let start_time = std::time::Instant::now();
         let mut current_frame: usize = 0;
 
-        // 8. Start the main render loop
-        // The loop where the MVP matrix is updated, and each frame is recorded and submitted to the queue.
         let _ = base.render_loop(|| {
             let elapsed = start_time.elapsed().as_secs_f32();
 
