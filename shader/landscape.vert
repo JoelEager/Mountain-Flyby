@@ -25,9 +25,10 @@ float get_height(float px, float pz, float world_z) {
     float height = sin(modified_world_z * 0.2) * 2.0 + cos(modified_world_z * 0.5) * 1.0;
 
     // Add height to form the mountain ridge
-    float mountain_ratio = abs(abs(px) - valley_width) / valley_width;      // closer to 0 -> mountains taller
-    float ridge_factor = max(1.0 - mountain_ratio, 0.0);
-    height = height * ridge_factor + ridge_factor * mountain_scale;         // Increase the amount of noise height when the mountain is taller
+    float modified_px = px + sin(world_z * 0.3) * 0.6 + cos(world_z * 0.8) * 1.2;   // Apply some world z to x so the center of the valley varies
+    float mountain_ratio = (abs(modified_px) - valley_width) / valley_width;        // closer to 0 -> mountains taller
+    float ridge_factor = max(1.0 - abs(mountain_ratio), 0.0);
+    height = height * ridge_factor + ridge_factor * mountain_scale;                 // Increase the amount of noise height when the mountain is taller
 
     // Add details
     height += sin(px * 1.5 + world_z * 0.8) * 0.2;
