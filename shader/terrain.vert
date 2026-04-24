@@ -12,7 +12,7 @@ layout (binding = 0) uniform UniformBufferObject {
 } ubo;
 
 // Output color to be passed to the fragment shader
-layout (location = 0) out vec4 o_color;
+layout (location = 0) out vec3 o_color;
 
 // The space between mesh vertices. Must match the value used in landscape.rs
 const float GRID_SCALE = 0.5;
@@ -56,11 +56,11 @@ void main() {
     float height = get_height(px, pz, world_z);
 
     // Height-based coloring
-    vec4 snow_color = vec4(0.9, 0.9, 0.95, 1.0);
-    vec4 rock_color = vec4(0.5, 0.45, 0.45, 1.0);
+    vec3 snow_color = vec3(0.9, 0.9, 0.95);
+    vec3 rock_color = vec3(0.5, 0.45, 0.45);
 
     float noise = (sin(px * 1.5 + world_z * 0.8) + cos(px * 3.0 - world_z * 2.0)) * 0.08;
-    vec4 grass_color = vec4(0.2 + noise, 0.5 + noise, 0.2 + noise, 1.0);
+    vec3 grass_color = vec3(0.2 + noise, 0.5 + noise, 0.2 + noise);
 
     o_color = mix(grass_color, rock_color, smoothstep(6.0, 7.0, height));
     o_color = mix(o_color, snow_color, smoothstep(9.0, 10.0, height));
@@ -81,12 +81,12 @@ void main() {
     float diffuse = max(dot(normal, lightDir), 0.0);
     float ambient = 0.3;
 
-    o_color.rgb = o_color.rgb * (diffuse + ambient);
+    o_color = o_color * (diffuse + ambient);
 
     // Calculate horizon fog
     float dist = length(vec2(px, pz));
     float fog_factor = smoothstep(100.0, 500.0, dist);
-    vec4 fog_color = vec4(0.3, 0.5, 0.8, 1.0);
+    vec3 fog_color = vec3(0.3, 0.5, 0.8);
 
     o_color = mix(o_color, fog_color, fog_factor);
 
