@@ -1,13 +1,15 @@
 use crate::Vertex;
 
 pub fn generate_landscape() -> (Vec<Vertex>, Vec<u32>) {
+    // The mesh will have this many vertices per side
     let width = 256;
     let depth = 1024;
 
+    // The vertices will be spaced by this distance
+    let scale = 0.5;
+
     let mut vertices = Vec::with_capacity(width * depth * 2);
     let mut indices = Vec::with_capacity((width - 1) * (depth - 1) * 6 * 2);
-
-    let scale = 0.5;
 
     // Generate ground and cloud vertices
     for is_cloud in 0..2 {
