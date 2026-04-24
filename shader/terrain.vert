@@ -18,7 +18,7 @@ layout (location = 0) out vec4 o_color;
 const float GRID_SCALE = 0.5;
 
 // Constants to control terrain height generation
-const float VALLEY_WIDTH = 24.0;
+const float VALLEY_WIDTH = 24.0;                        // Must be smaller than terrain mesh width * GRID_SCALE / 2
 const float MOUNTAIN_SCALE = 9.0;
 
 // Calculate height of a given vertex
@@ -85,7 +85,7 @@ void main() {
 
     // Calculate horizon fog
     float dist = length(vec2(px, pz));
-    float fog_factor = smoothstep(100.0, 520.0, dist);
+    float fog_factor = smoothstep(100.0, 500.0, dist);
     vec4 fog_color = vec4(0.3, 0.5, 0.8, 1.0);
 
     o_color = mix(o_color, fog_color, fog_factor);

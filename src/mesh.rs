@@ -2,7 +2,7 @@ use crate::Vertex;
 
 pub fn generate_terrain() -> (Vec<Vertex>, Vec<u32>) {
     // The mesh will have this many vertices per side
-    let width = 256;
+    let width = 128;
     let depth = 1024;
 
     // The vertices will be spaced by this distance
@@ -53,7 +53,7 @@ pub fn generate_clouds() -> (Vec<Vertex>, Vec<u32>) {
     let depth = 1024;
 
     // The vertices will be spaced by this distance
-    let scale = 0.5;
+    let scale = 1.0;
 
     let mut vertices = Vec::with_capacity(width * depth);
     let mut indices = Vec::with_capacity((width - 1) * (depth - 1) * 6);

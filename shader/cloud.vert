@@ -15,18 +15,16 @@ layout (binding = 0) uniform UniformBufferObject {
 layout (location = 0) out vec4 o_color;
 
 // The space between mesh vertices. Must match the value used in landscape.rs
-const float GRID_SCALE = 0.5;
+const float GRID_SCALE = 1.0;
 
 void main() {
     float px = pos.x;
     float pz = pos.z;
+    float height = 15.0;
 
     // Move world z in steps that match GRID_SCALE so the noise stays aligned to the vertices
     float snapped_offset = floor(ubo.offset / GRID_SCALE) * GRID_SCALE;
     float world_z = pz + snapped_offset;
-
-    // Initialize to the value for clouds.
-    float height = 15.0;
 
     // Cloud rendering logic
     float cloud_density = sin(px * 0.15 + world_z * 0.1) * 0.5
@@ -39,7 +37,7 @@ void main() {
         height += (cloud_density - 0.3) * 5.0;
     }
 
-    // Calculate the z remainder to smooth out the stepped terrain movement
+    // Calculate the z remainder to smooth out the stepped cloud movement
     float offset_remainder = ubo.offset - snapped_offset; // Always between 0.0 and GRID_SCALE
 
     gl_Position = ubo.mvp * vec4(px, height, pz - offset_remainder, 1.0);
