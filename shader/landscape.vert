@@ -21,7 +21,7 @@ const float mountain_scale = 9.0;
 // Calculate height of a given vertex
 float get_height(float px, float pz, float world_z) {
     // Base height from Perlin-like noise (simplified with trig functions)
-    float modified_world_z = world_z + sin(px) * 3.0;                       // Blend some x into the base noise so the two mountain ridges don't look so similar
+    float modified_world_z = world_z + sin(px) * 5.0;                       // Blend some x into the base noise so the two mountain ridges don't look so similar
     float height = sin(modified_world_z * 0.2) * 2.0 + cos(modified_world_z * 0.5) * 1.0;
 
     // Add height to form the mountain ridge
@@ -70,12 +70,12 @@ void main() {
         if (height > 9.5) {
             // Snow
             final_color = vec4(0.9, 0.9, 0.95, 1.0);
-        } else if (height > 5.0) {
+        } else if (height > 6.5) {
             // Rock
             final_color = vec4(0.5, 0.45, 0.45, 1.0);
         } else {
             // Grass / Valley
-            float noise = (sin(px * 1.5 + world_z * 0.8) + cos(px * 3.0 - world_z * 2.0)) * 0.05;
+            float noise = (sin(px * 1.5 + world_z * 0.8) + cos(px * 3.0 - world_z * 2.0)) * 0.08;
             final_color = vec4(0.2 + noise, 0.5 + noise, 0.2 + noise, 1.0);
         }
 
