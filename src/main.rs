@@ -102,99 +102,190 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // 2. Load the 3D model (vertices and indices)
         // Generates the landscape mesh.
-        let (vertices, index_buffer_data) = landscape::generate_landscape();
+        let (terrain_vertices, terrain_index_buffer_data) = landscape::generate_terrain();
+        let (cloud_vertices, cloud_index_buffer_data) = landscape::generate_clouds();
 
         // 3. Setup Index Buffer for drawing
         // Creates a device-visible buffer to hold the indices used to draw the model.
-        let index_buffer_info = vk::BufferCreateInfo::default()
-            .size((index_buffer_data.len() * size_of::<u32>()) as u64)
+        let terrain_index_buffer_info = vk::BufferCreateInfo::default()
+            .size((terrain_index_buffer_data.len() * size_of::<u32>()) as u64)
             .usage(vk::BufferUsageFlags::INDEX_BUFFER)
             .sharing_mode(vk::SharingMode::EXCLUSIVE);
-        let index_buffer = base.device.create_buffer(&index_buffer_info, None).unwrap();
-        let index_buffer_memory_req = base.device.get_buffer_memory_requirements(index_buffer);
-        let index_buffer_memory_index = find_memorytype_index(
-            &index_buffer_memory_req,
+        let terrain_index_buffer = base.device.create_buffer(&terrain_index_buffer_info, None).unwrap();
+        let terrain_index_buffer_memory_req = base.device.get_buffer_memory_requirements(terrain_index_buffer);
+        let terrain_index_buffer_memory_index = find_memorytype_index(
+            &terrain_index_buffer_memory_req,
             &base.device_memory_properties,
             vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
         )
         .expect("Unable to find suitable memorytype for the index buffer.");
-        let index_allocate_info = vk::MemoryAllocateInfo {
-            allocation_size: index_buffer_memory_req.size,
-            memory_type_index: index_buffer_memory_index,
+        let terrain_index_allocate_info = vk::MemoryAllocateInfo {
+            allocation_size: terrain_index_buffer_memory_req.size,
+            memory_type_index: terrain_index_buffer_memory_index,
             ..Default::default()
         };
-        let index_buffer_memory = base
+        let terrain_index_buffer_memory = base
             .device
-            .allocate_memory(&index_allocate_info, None)
+            .allocate_memory(&terrain_index_allocate_info, None)
             .unwrap();
-        let index_ptr: *mut c_void = base
+        let terrain_index_ptr: *mut c_void = base
             .device
             .map_memory(
-                index_buffer_memory,
+                terrain_index_buffer_memory,
                 0,
-                index_buffer_memory_req.size,
+                terrain_index_buffer_memory_req.size,
                 vk::MemoryMapFlags::empty(),
             )
             .unwrap();
-        let mut index_slice = Align::new(
-            index_ptr,
+        let mut terrain_index_slice = Align::new(
+            terrain_index_ptr,
             align_of::<u32>() as u64,
-            index_buffer_memory_req.size,
+            terrain_index_buffer_memory_req.size,
         );
-        index_slice.copy_from_slice(&index_buffer_data);
-        base.device.unmap_memory(index_buffer_memory);
+        terrain_index_slice.copy_from_slice(&terrain_index_buffer_data);
+        base.device.unmap_memory(terrain_index_buffer_memory);
+
+        // 3. Setup Cloud Index Buffer for drawing
+        // Creates a device-visible buffer to hold the indices used to draw the model.
+        let cloud_index_buffer_info = vk::BufferCreateInfo::default()
+            .size((cloud_index_buffer_data.len() * size_of::<u32>()) as u64)
+            .usage(vk::BufferUsageFlags::INDEX_BUFFER)
+            .sharing_mode(vk::SharingMode::EXCLUSIVE);
+        let cloud_index_buffer = base.device.create_buffer(&cloud_index_buffer_info, None).unwrap();
+        let cloud_index_buffer_memory_req = base.device.get_buffer_memory_requirements(cloud_index_buffer);
+        let cloud_index_buffer_memory_index = find_memorytype_index(
+            &cloud_index_buffer_memory_req,
+            &base.device_memory_properties,
+            vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
+        )
+        .expect("Unable to find suitable memorytype for the index buffer.");
+        let cloud_index_allocate_info = vk::MemoryAllocateInfo {
+            allocation_size: cloud_index_buffer_memory_req.size,
+            memory_type_index: cloud_index_buffer_memory_index,
+            ..Default::default()
+        };
+        let cloud_index_buffer_memory = base
+            .device
+            .allocate_memory(&cloud_index_allocate_info, None)
+            .unwrap();
+        let cloud_index_ptr: *mut c_void = base
+            .device
+            .map_memory(
+                cloud_index_buffer_memory,
+                0,
+                cloud_index_buffer_memory_req.size,
+                vk::MemoryMapFlags::empty(),
+            )
+            .unwrap();
+        let mut cloud_index_slice = Align::new(
+            cloud_index_ptr,
+            align_of::<u32>() as u64,
+            cloud_index_buffer_memory_req.size,
+        );
+        cloud_index_slice.copy_from_slice(&cloud_index_buffer_data);
+        base.device.unmap_memory(cloud_index_buffer_memory);
         base.device
-            .bind_buffer_memory(index_buffer, index_buffer_memory, 0)
+            .bind_buffer_memory(cloud_index_buffer, cloud_index_buffer_memory, 0)
             .unwrap();
 
         // 4. Setup Vertex Input Buffer
         // Creates a device-visible buffer to hold the vertex data (position, uv).
-        let vertex_input_buffer_info = vk::BufferCreateInfo::default()
-            .size((vertices.len() * size_of::<Vertex>()) as u64)
+        let terrain_vertex_input_buffer_info = vk::BufferCreateInfo::default()
+            .size((terrain_vertices.len() * size_of::<Vertex>()) as u64)
             .usage(vk::BufferUsageFlags::VERTEX_BUFFER)
             .sharing_mode(vk::SharingMode::EXCLUSIVE);
-        let vertex_input_buffer = base
+        let terrain_vertex_input_buffer = base
             .device
-            .create_buffer(&vertex_input_buffer_info, None)
+            .create_buffer(&terrain_vertex_input_buffer_info, None)
             .unwrap();
-        let vertex_input_buffer_memory_req = base
+        let terrain_vertex_input_buffer_memory_req = base
             .device
-            .get_buffer_memory_requirements(vertex_input_buffer);
-        let vertex_input_buffer_memory_index = find_memorytype_index(
-            &vertex_input_buffer_memory_req,
+            .get_buffer_memory_requirements(terrain_vertex_input_buffer);
+        let terrain_vertex_input_buffer_memory_index = find_memorytype_index(
+            &terrain_vertex_input_buffer_memory_req,
             &base.device_memory_properties,
             vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
         )
         .expect("Unable to find suitable memorytype for the vertex buffer.");
 
-        let vertex_buffer_allocate_info = vk::MemoryAllocateInfo {
-            allocation_size: vertex_input_buffer_memory_req.size,
-            memory_type_index: vertex_input_buffer_memory_index,
+        let terrain_vertex_buffer_allocate_info = vk::MemoryAllocateInfo {
+            allocation_size: terrain_vertex_input_buffer_memory_req.size,
+            memory_type_index: terrain_vertex_input_buffer_memory_index,
             ..Default::default()
         };
-        let vertex_input_buffer_memory = base
+        let terrain_vertex_input_buffer_memory = base
             .device
-            .allocate_memory(&vertex_buffer_allocate_info, None)
+            .allocate_memory(&terrain_vertex_buffer_allocate_info, None)
             .unwrap();
 
-        let vert_ptr = base
+        let terrain_vert_ptr = base
             .device
             .map_memory(
-                vertex_input_buffer_memory,
+                terrain_vertex_input_buffer_memory,
                 0,
-                vertex_input_buffer_memory_req.size,
+                terrain_vertex_input_buffer_memory_req.size,
                 vk::MemoryMapFlags::empty(),
             )
             .unwrap();
-        let mut slice = Align::new(
-            vert_ptr,
+        let mut terrain_slice = Align::new(
+            terrain_vert_ptr,
             align_of::<Vertex>() as u64,
-            vertex_input_buffer_memory_req.size,
+            terrain_vertex_input_buffer_memory_req.size,
         );
-        slice.copy_from_slice(&vertices);
-        base.device.unmap_memory(vertex_input_buffer_memory);
+        terrain_slice.copy_from_slice(&terrain_vertices);
+        base.device.unmap_memory(terrain_vertex_input_buffer_memory);
         base.device
-            .bind_buffer_memory(vertex_input_buffer, vertex_input_buffer_memory, 0)
+            .bind_buffer_memory(terrain_vertex_input_buffer, terrain_vertex_input_buffer_memory, 0)
+            .unwrap();
+
+        // 4. Setup Cloud Vertex Input Buffer
+        // Creates a device-visible buffer to hold the vertex data (position, uv).
+        let cloud_vertex_input_buffer_info = vk::BufferCreateInfo::default()
+            .size((cloud_vertices.len() * size_of::<Vertex>()) as u64)
+            .usage(vk::BufferUsageFlags::VERTEX_BUFFER)
+            .sharing_mode(vk::SharingMode::EXCLUSIVE);
+        let cloud_vertex_input_buffer = base
+            .device
+            .create_buffer(&cloud_vertex_input_buffer_info, None)
+            .unwrap();
+        let cloud_vertex_input_buffer_memory_req = base
+            .device
+            .get_buffer_memory_requirements(cloud_vertex_input_buffer);
+        let cloud_vertex_input_buffer_memory_index = find_memorytype_index(
+            &cloud_vertex_input_buffer_memory_req,
+            &base.device_memory_properties,
+            vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
+        )
+        .expect("Unable to find suitable memorytype for the vertex buffer.");
+
+        let cloud_vertex_buffer_allocate_info = vk::MemoryAllocateInfo {
+            allocation_size: cloud_vertex_input_buffer_memory_req.size,
+            memory_type_index: cloud_vertex_input_buffer_memory_index,
+            ..Default::default()
+        };
+        let cloud_vertex_input_buffer_memory = base
+            .device
+            .allocate_memory(&cloud_vertex_buffer_allocate_info, None)
+            .unwrap();
+
+        let cloud_vert_ptr = base
+            .device
+            .map_memory(
+                cloud_vertex_input_buffer_memory,
+                0,
+                cloud_vertex_input_buffer_memory_req.size,
+                vk::MemoryMapFlags::empty(),
+            )
+            .unwrap();
+        let mut cloud_slice = Align::new(
+            cloud_vert_ptr,
+            align_of::<Vertex>() as u64,
+            cloud_vertex_input_buffer_memory_req.size,
+        );
+        cloud_slice.copy_from_slice(&cloud_vertices);
+        base.device.unmap_memory(cloud_vertex_input_buffer_memory);
+        base.device
+            .bind_buffer_memory(cloud_vertex_input_buffer, cloud_vertex_input_buffer_memory, 0)
             .unwrap();
 
         // 5. Uniform Buffer setup (MVP matrix)
@@ -345,6 +436,27 @@ fn main() -> Result<(), Box<dyn Error>> {
             .create_shader_module(&frag_shader_info, None)
             .expect("Fragment shader module error");
 
+        let mut cloud_vertex_spv_file = Cursor::new(&include_bytes!("../shader/cloud_vert.spv")[..]);
+        let mut cloud_frag_spv_file = Cursor::new(&include_bytes!("../shader/cloud_frag.spv")[..]);
+
+        let cloud_vertex_code =
+            read_spv(&mut cloud_vertex_spv_file).expect("Failed to read vertex shader spv file");
+        let cloud_vertex_shader_info = vk::ShaderModuleCreateInfo::default().code(&cloud_vertex_code);
+
+        let cloud_frag_code =
+            read_spv(&mut cloud_frag_spv_file).expect("Failed to read fragment shader spv file");
+        let cloud_frag_shader_info = vk::ShaderModuleCreateInfo::default().code(&cloud_frag_code);
+
+        let cloud_vertex_shader_module = base
+            .device
+            .create_shader_module(&cloud_vertex_shader_info, None)
+            .expect("Vertex shader module error");
+
+        let cloud_fragment_shader_module = base
+            .device
+            .create_shader_module(&cloud_frag_shader_info, None)
+            .expect("Fragment shader module error");
+
         let layout_create_info =
             vk::PipelineLayoutCreateInfo::default().set_layouts(&desc_set_layouts);
 
@@ -458,12 +570,31 @@ fn main() -> Result<(), Box<dyn Error>> {
             .layout(pipeline_layout)
             .render_pass(renderpass);
 
+
+        let cloud_shader_stage_create_infos = [
+            vk::PipelineShaderStageCreateInfo {
+                module: cloud_vertex_shader_module,
+                p_name: shader_entry_name.as_ptr(),
+                stage: vk::ShaderStageFlags::VERTEX,
+                ..Default::default()
+            },
+            vk::PipelineShaderStageCreateInfo {
+                module: cloud_fragment_shader_module,
+                p_name: shader_entry_name.as_ptr(),
+                stage: vk::ShaderStageFlags::FRAGMENT,
+                ..Default::default()
+            },
+        ];
+
+        let cloud_graphic_pipeline_infos = graphic_pipeline_infos.clone().stages(&cloud_shader_stage_create_infos);
+
         let graphics_pipelines = base
             .device
-            .create_graphics_pipelines(vk::PipelineCache::null(), &[graphic_pipeline_infos], None)
+            .create_graphics_pipelines(vk::PipelineCache::null(), &[graphic_pipeline_infos, cloud_graphic_pipeline_infos], None)
             .unwrap();
 
-        let graphic_pipeline = graphics_pipelines[0];
+        let terrain_graphic_pipeline = graphics_pipelines[0];
+        let cloud_graphic_pipeline = graphics_pipelines[1];
 
         // 8. Start the main render loop
         // The loop where the MVP matrix is updated, and each frame is recorded and submitted to the queue.
@@ -559,7 +690,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             base.device.cmd_bind_pipeline(
                 draw_command_buffer,
                 vk::PipelineBindPoint::GRAPHICS,
-                graphic_pipeline,
+                terrain_graphic_pipeline,
             );
             base.device
                 .cmd_set_viewport(draw_command_buffer, 0, &viewports);
@@ -568,18 +699,47 @@ fn main() -> Result<(), Box<dyn Error>> {
             base.device.cmd_bind_vertex_buffers(
                 draw_command_buffer,
                 0,
-                &[vertex_input_buffer],
+                &[terrain_vertex_input_buffer],
                 &[0],
             );
             base.device.cmd_bind_index_buffer(
                 draw_command_buffer,
-                index_buffer,
+                terrain_index_buffer,
                 0,
                 vk::IndexType::UINT32,
             );
             base.device.cmd_draw_indexed(
                 draw_command_buffer,
-                index_buffer_data.len() as u32,
+                terrain_index_buffer_data.len() as u32,
+                1,
+                0,
+                0,
+                1,
+            );
+            base.device.cmd_bind_pipeline(
+                draw_command_buffer,
+                vk::PipelineBindPoint::GRAPHICS,
+                cloud_graphic_pipeline,
+            );
+            base.device
+                .cmd_set_viewport(draw_command_buffer, 0, &viewports);
+            base.device
+                .cmd_set_scissor(draw_command_buffer, 0, &scissors);
+            base.device.cmd_bind_vertex_buffers(
+                draw_command_buffer,
+                0,
+                &[cloud_vertex_input_buffer],
+                &[0],
+            );
+            base.device.cmd_bind_index_buffer(
+                draw_command_buffer,
+                cloud_index_buffer,
+                0,
+                vk::IndexType::UINT32,
+            );
+            base.device.cmd_draw_indexed(
+                draw_command_buffer,
+                cloud_index_buffer_data.len() as u32,
                 1,
                 0,
                 0,
@@ -631,14 +791,20 @@ fn main() -> Result<(), Box<dyn Error>> {
         base.device.destroy_pipeline_layout(pipeline_layout, None);
         base.device
             .destroy_shader_module(vertex_shader_module, None);
+        base.device.destroy_shader_module(cloud_vertex_shader_module, None);
         base.device
             .destroy_shader_module(fragment_shader_module, None);
-        base.device.free_memory(index_buffer_memory, None);
-        base.device.destroy_buffer(index_buffer, None);
+        base.device.destroy_shader_module(cloud_fragment_shader_module, None);
+        base.device.free_memory(terrain_index_buffer_memory, None);
+        base.device.free_memory(cloud_index_buffer_memory, None);
+        base.device.destroy_buffer(terrain_index_buffer, None);
+        base.device.destroy_buffer(cloud_index_buffer, None);
         base.device.free_memory(uniform_color_buffer_memory, None);
         base.device.destroy_buffer(uniform_color_buffer, None);
-        base.device.free_memory(vertex_input_buffer_memory, None);
-        base.device.destroy_buffer(vertex_input_buffer, None);
+        base.device.free_memory(terrain_vertex_input_buffer_memory, None);
+        base.device.free_memory(cloud_vertex_input_buffer_memory, None);
+        base.device.destroy_buffer(terrain_vertex_input_buffer, None);
+        base.device.destroy_buffer(cloud_vertex_input_buffer, None);
         for &descriptor_set_layout in desc_set_layouts.iter() {
             base.device
                 .destroy_descriptor_set_layout(descriptor_set_layout, None);

@@ -52,59 +52,43 @@ void main() {
     float snapped_offset = floor(ubo.offset / GRID_SCALE) * GRID_SCALE;
     float world_z = pz + snapped_offset;
 
-    // Initialize to the value for clouds. If this is a terrain vertex the value will be replaced.
-    float height = 15.0;
+    // Mountain terrain logic
+    float height = get_height(px, pz, world_z);
 
-    if (pos.w > 1.5) {
-        // Cloud rendering logic
-        float cloud_density = sin(px * 0.15 + world_z * 0.1) * 0.5
-                            + cos(px * 0.05 - world_z * 0.15) * 0.5
-                            + sin(px * 0.3 + world_z * 0.2) * 0.25;
+    // Height-based coloring
+    vec4 snow_color = vec4(0.9, 0.9, 0.95, 1.0);
+    vec4 rock_color = vec4(0.5, 0.45, 0.45, 1.0);
 
-        o_color = vec4(1.0, 1.0, 1.0, 0.0);
-        if (cloud_density > 0.3) {
-            o_color.a = cloud_density;
-            height += (cloud_density - 0.3) * 5.0;
-        }
-    } else {
-        // Mountain terrain logic
-        height = get_height(px, pz, world_z);
+    float noise = (sin(px * 1.5 + world_z * 0.8) + cos(px * 3.0 - world_z * 2.0)) * 0.08;
+    vec4 grass_color = vec4(0.2 + noise, 0.5 + noise, 0.2 + noise, 1.0);
 
-        // Height-based coloring
-        vec4 snow_color = vec4(0.9, 0.9, 0.95, 1.0);
-        vec4 rock_color = vec4(0.5, 0.45, 0.45, 1.0);
+    o_color = mix(grass_color, rock_color, smoothstep(6.0, 7.0, height));
+    o_color = mix(o_color, snow_color, smoothstep(9.0, 10.0, height));
 
-        float noise = (sin(px * 1.5 + world_z * 0.8) + cos(px * 3.0 - world_z * 2.0)) * 0.08;
-        vec4 grass_color = vec4(0.2 + noise, 0.5 + noise, 0.2 + noise, 1.0);
+    // Calculate normals using approximate gradient
+    float eps = 0.1;
+    float h_x = get_height(px + eps, pz, world_z);
+    float h_z = get_height(px, pz + eps, world_z + eps);
 
-        o_color = mix(grass_color, rock_color, smoothstep(6.0, 7.0, height));
-        o_color = mix(o_color, snow_color, smoothstep(9.0, 10.0, height));
+    vec3 p = vec3(px, height, pz);
+    vec3 p_x = vec3(px + eps, h_x, pz);
+    vec3 p_z = vec3(px, h_z, pz + eps);
 
-        // Calculate normals using approximate gradient
-        float eps = 0.1;
-        float h_x = get_height(px + eps, pz, world_z);
-        float h_z = get_height(px, pz + eps, world_z + eps);
+    vec3 normal = normalize(cross(p_z - p, p_x - p));
 
-        vec3 p = vec3(px, height, pz);
-        vec3 p_x = vec3(px + eps, h_x, pz);
-        vec3 p_z = vec3(px, h_z, pz + eps);
+    // Calculate simple directional lighting
+    vec3 lightDir = normalize(vec3(-1.0, 1.0, -0.5));
+    float diffuse = max(dot(normal, lightDir), 0.0);
+    float ambient = 0.3;
 
-        vec3 normal = normalize(cross(p_z - p, p_x - p));
+    o_color.rgb = o_color.rgb * (diffuse + ambient);
 
-        // Calculate simple directional lighting
-        vec3 lightDir = normalize(vec3(-1.0, 1.0, -0.5));
-        float diffuse = max(dot(normal, lightDir), 0.0);
-        float ambient = 0.3;
+    // Calculate horizon fog
+    float dist = length(vec2(px, pz));
+    float fog_factor = smoothstep(100.0, 520.0, dist);
+    vec4 fog_color = vec4(0.3, 0.5, 0.8, 1.0);
 
-        o_color.rgb = o_color.rgb * (diffuse + ambient);
-
-        // Calculate horizon fog
-        float dist = length(vec2(px, pz));
-        float fog_factor = smoothstep(100.0, 520.0, dist);
-        vec4 fog_color = vec4(0.3, 0.5, 0.8, 1.0);
-
-        o_color = mix(o_color, fog_color, fog_factor);
-    }
+    o_color = mix(o_color, fog_color, fog_factor);
 
     // Calculate the z remainder to smooth out the stepped terrain movement
     float offset_remainder = ubo.offset - snapped_offset; // Always between 0.0 and GRID_SCALE
