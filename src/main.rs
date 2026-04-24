@@ -144,6 +144,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         );
         terrain_index_slice.copy_from_slice(&terrain_index_buffer_data);
         base.device.unmap_memory(terrain_index_buffer_memory);
+        base.device
+            .bind_buffer_memory(terrain_index_buffer, terrain_index_buffer_memory, 0)
+            .unwrap();
 
         // 3. Setup Cloud Index Buffer for drawing
         // Creates a device-visible buffer to hold the indices used to draw the model.
@@ -785,8 +788,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         base.device.device_wait_idle().unwrap();
 
         // 9. Clean up resources after the window is closed
-        for pipeline in graphics_pipelines {
-            base.device.destroy_pipeline(pipeline, None);
+        for pipeline in graphics_pipelines.iter() {
+            base.device.destroy_pipeline(*pipeline, None);
         }
         base.device.destroy_pipeline_layout(pipeline_layout, None);
         base.device
