@@ -9,7 +9,7 @@ use ash::util::*;
 use ash::vk;
 use mountain_flyby::*;
 
-mod mountain;
+mod landscape;
 
 #[derive(Clone, Debug, Copy, PartialEq, Default)]
 pub struct Vertex {
@@ -102,8 +102,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             .collect();
 
         // 2. Load the 3D model (vertices and indices)
-        // Generates the mountain mesh.
-        let (vertices, index_buffer_data) = mountain::generate_mountain_ridge();
+        // Generates the landscape mesh.
+        let (vertices, index_buffer_data) = landscape::generate_landscape();
 
         // 3. Setup Index Buffer for drawing
         // Creates a device-visible buffer to hold the indices used to draw the model.
