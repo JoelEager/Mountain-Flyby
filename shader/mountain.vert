@@ -21,7 +21,8 @@ const float mountain_scale = 9.0;
 // Calculate height of a given vertex
 float get_height(float px, float pz, float world_z) {
     // Base height from Perlin-like noise (simplified with trig functions)
-    float height = sin(world_z * 0.2) * 2.0 + cos(world_z * 0.5) * 1.0;
+    float modified_world_z = world_z + sin(px) * 3.0;                       // Blend some x into the base noise so the two mountain ridges don't look so similar
+    float height = sin(modified_world_z * 0.2) * 2.0 + cos(modified_world_z * 0.5) * 1.0;
 
     // Add height to form the mountain ridge
     float mountain_ratio = abs(abs(px) - valley_width) / valley_width;      // closer to 0 -> mountains taller
