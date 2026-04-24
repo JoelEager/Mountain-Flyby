@@ -31,8 +31,8 @@ float get_height(float px, float pz, float world_z) {
     height = height * ridge_factor + ridge_factor * mountain_scale;                 // Increase the amount of noise height when the mountain is taller
 
     // Add details
-    height += sin(px * 1.5 + world_z * 0.8) * 0.2;
-    height += cos(px * 1.0 - world_z * 2.0) * 0.15;
+    height += sin(px * 1.5 + world_z * 0.8) * 0.13;
+    height += cos(px * 1.0 - world_z * 2.0) * 0.09;
     height -= sin(-px * 0.9 + world_z * 1.3) * 0.1;
 
     return height;
