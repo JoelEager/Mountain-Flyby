@@ -9,10 +9,3 @@ ash-window = "0.13.0"
 cgmath = "0.18.0"
 image = "0.25"
 winit = "0.29"
-
-[dev-dependencies]
-criterion = "0.8.2"
-
-[[bench]]
-name = "submit_info_bench"
-harness = false
