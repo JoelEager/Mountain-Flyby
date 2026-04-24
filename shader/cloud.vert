@@ -28,8 +28,8 @@ void main() {
 
     // Cloud rendering logic
     float cloud_density = sin(px * 0.15 + world_z * 0.1) * 0.5
-                        + cos(px * 0.05 - world_z * 0.15) * 0.5
-                        + sin(px * 0.3 + world_z * 0.2) * 0.25;
+                        + cos(px * 0.05 - world_z * 0.12) * 0.5
+                        + sin(px * 0.3 + world_z * 0.02) * 0.25;
 
     o_color = vec4(1.0, 1.0, 1.0, 0.0);
     o_color.a = smoothstep(0.3, 0.5, cloud_density);
