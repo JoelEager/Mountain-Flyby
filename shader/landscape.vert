@@ -14,6 +14,9 @@ layout (binding = 0) uniform UniformBufferObject {
 // Output color to be passed to the fragment shader
 layout (location = 0) out vec4 o_color;
 
+// The space between mesh vertices. Must match the value used in landscape.rs
+const float GRID_SCALE = 0.5;
+
 // Constants to control terrain height generation
 const float VALLEY_WIDTH = 24.0;
 const float MOUNTAIN_SCALE = 9.0;
@@ -44,7 +47,13 @@ float get_height(float px, float pz, float world_z) {
 void main() {
     float px = pos.x;
     float pz = pos.z;
-    float world_z = pz + ubo.offset;
+
+    // Move world z in steps that match GRID_SCALE so the noise stays aligned to the vertices
+    float snapped_offset = floor(ubo.offset / GRID_SCALE) * GRID_SCALE;
+    float world_z = pz + snapped_offset;
+
+    // Initialize to the value for clouds. If this is a terrain vertex the value will be replaced.
+    float height = 15.0;
 
     if (pos.w > 1.5) {
         // Cloud rendering logic
@@ -53,17 +62,13 @@ void main() {
                             + sin(px * 0.3 + world_z * 0.2) * 0.25;
 
         o_color = vec4(1.0, 1.0, 1.0, 0.0);
-        float cloud_height = 15.0;
         if (cloud_density > 0.3) {
             o_color.a = cloud_density;
-            cloud_height += (cloud_density - 0.3) * 5.0;
+            height += (cloud_density - 0.3) * 5.0;
         }
-
-        // Place clouds high up
-        gl_Position = ubo.mvp * vec4(px, cloud_height, pz, 1.0);
     } else {
         // Mountain terrain logic
-        float height = get_height(px, pz, world_z);
+        height = get_height(px, pz, world_z);
 
         // Height-based coloring
         vec4 snow_color = vec4(0.9, 0.9, 0.95, 1.0);
@@ -99,7 +104,10 @@ void main() {
         vec4 fog_color = vec4(0.3, 0.5, 0.8, 1.0);
 
         o_color = mix(o_color, fog_color, fog_factor);
-
-        gl_Position = ubo.mvp * vec4(px, height, pz, 1.0);
     }
+
+    // Calculate the z remainder to smooth out the stepped terrain movement
+    float offset_remainder = ubo.offset - snapped_offset; // Always between 0.0 and GRID_SCALE
+
+    gl_Position = ubo.mvp * vec4(px, height, pz - offset_remainder, 1.0);
 }
