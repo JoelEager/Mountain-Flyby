@@ -78,3 +78,67 @@ pub fn generate_mountain_ridge() -> (Vec<Vertex>, Vec<u32>) {
 
     (vertices, indices)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_mountain_ridge_generation() {
+        let (vertices, indices) = generate_mountain_ridge();
+
+        let width = 256;
+        let depth = 1024;
+        let num_grids = 2;
+
+        assert_eq!(vertices.len(), width * depth * num_grids);
+        assert_eq!(indices.len(), (width - 1) * (depth - 1) * 6 * num_grids);
+
+        // Check if all indices are valid
+        for &index in &indices {
+            assert!((index as usize) < vertices.len(), "Index {} is out of bounds (max {})", index, vertices.len());
+        }
+
+        // Check vertex w components
+        for i in 0..(width * depth) {
+            assert_eq!(vertices[i].pos[3], 1.0, "Vertex {} should be ground (w=1.0)", i);
+        }
+        for i in (width * depth)..(width * depth * 2) {
+            assert_eq!(vertices[i].pos[3], 2.0, "Vertex {} should be clouds (w=2.0)", i);
+        }
+
+        // Check some coordinate ranges
+        let scale = 0.5;
+        let max_x = (width as f32 - 1.0 - width as f32 / 2.0) * scale;
+        let min_x = (0.0 - width as f32 / 2.0) * scale;
+        let min_z = -(depth as f32 - 1.0) * scale;
+        let max_z = 0.0;
+
+        for (i, v) in vertices.iter().enumerate() {
+            assert!(v.pos[0] >= min_x - 0.0001 && v.pos[0] <= max_x + 0.0001, "Vertex {} X coord {} out of range [{}, {}]", i, v.pos[0], min_x, max_x);
+            assert!(v.pos[1] == 0.0, "Vertex {} Y coord {} should be 0.0", i, v.pos[1]);
+            assert!(v.pos[2] >= min_z - 0.0001 && v.pos[2] <= max_z + 0.0001, "Vertex {} Z coord {} out of range [{}, {}]", i, v.pos[2], min_z, max_z);
+        }
+    }
+
+    #[test]
+    fn test_vertex_separation() {
+        let (vertices, _) = generate_mountain_ridge();
+        let width = 256;
+        let depth = 1024;
+
+        // Ensure ground and cloud vertices at the same grid position have same X, Z but different W
+        for z in 0..depth {
+            for x in 0..width {
+                let ground_idx = z * width + x;
+                let cloud_idx = ground_idx + width * depth;
+
+                assert_eq!(vertices[ground_idx].pos[0], vertices[cloud_idx].pos[0]);
+                assert_eq!(vertices[ground_idx].pos[1], vertices[cloud_idx].pos[1]);
+                assert_eq!(vertices[ground_idx].pos[2], vertices[cloud_idx].pos[2]);
+                assert_eq!(vertices[ground_idx].pos[3], 1.0);
+                assert_eq!(vertices[cloud_idx].pos[3], 2.0);
+            }
+        }
+    }
+}

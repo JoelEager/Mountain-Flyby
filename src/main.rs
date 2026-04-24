@@ -11,7 +11,7 @@ use mountain_flyby::*;
 
 mod mountain;
 
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Debug, Copy, PartialEq, Default)]
 pub struct Vertex {
     pub pos: [f32; 4],
 }
