@@ -67,18 +67,15 @@ void main() {
         float height = get_height(px, pz, world_z);
 
         // Height-based coloring
-        vec4 final_color;
-        if (height > 9.5) {
-            // Snow
-            final_color = vec4(0.9, 0.9, 0.95, 1.0);
-        } else if (height > 6.5) {
-            // Rock
-            final_color = vec4(0.5, 0.45, 0.45, 1.0);
-        } else {
-            // Grass / Valley
-            float noise = (sin(px * 1.5 + world_z * 0.8) + cos(px * 3.0 - world_z * 2.0)) * 0.08;
-            final_color = vec4(0.2 + noise, 0.5 + noise, 0.2 + noise, 1.0);
-        }
+        vec4 snow_color = vec4(0.9, 0.9, 0.95, 1.0);
+        vec4 rock_color = vec4(0.5, 0.45, 0.45, 1.0);
+
+        // Grass / Valley
+        float noise = (sin(px * 1.5 + world_z * 0.8) + cos(px * 3.0 - world_z * 2.0)) * 0.08;
+        vec4 grass_color = vec4(0.2 + noise, 0.5 + noise, 0.2 + noise, 1.0);
+
+        vec4 final_color = mix(grass_color, rock_color, smoothstep(6.0, 7.0, height));
+        final_color = mix(final_color, snow_color, smoothstep(9.0, 10.0, height));
 
         // Calculate normals using approximate gradient
         float eps = 0.1;
