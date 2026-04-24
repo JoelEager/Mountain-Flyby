@@ -8,7 +8,7 @@ use ash::util::*;
 use ash::vk;
 use mountain_flyby::*;
 
-mod landscape;
+mod mesh;
 
 #[derive(Clone, Debug, Copy, PartialEq, Default)]
 pub struct Vertex {
@@ -102,8 +102,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // 2. Load the 3D model (vertices and indices)
         // Generates the landscape mesh.
-        let (terrain_vertices, terrain_index_buffer_data) = landscape::generate_terrain();
-        let (cloud_vertices, cloud_index_buffer_data) = landscape::generate_clouds();
+        let (terrain_vertices, terrain_index_buffer_data) = mesh::generate_terrain();
+        let (cloud_vertices, cloud_index_buffer_data) = mesh::generate_clouds();
 
         // 3. Setup Index Buffer for drawing
         // Creates a device-visible buffer to hold the indices used to draw the model.
@@ -418,8 +418,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // 7. Load compiled shaders and create the Graphics Pipeline
         // Reads the SPIR-V shaders, sets up the pipeline layout, and creates the actual graphics pipeline.
-        let mut vertex_spv_file = Cursor::new(&include_bytes!("../shader/vert.spv")[..]);
-        let mut frag_spv_file = Cursor::new(&include_bytes!("../shader/frag.spv")[..]);
+        let mut vertex_spv_file = Cursor::new(&include_bytes!("../shader/terrain_vert.spv")[..]);
+        let mut frag_spv_file = Cursor::new(&include_bytes!("../shader/terrain_frag.spv")[..]);
 
         let vertex_code =
             read_spv(&mut vertex_spv_file).expect("Failed to read vertex shader spv file");
