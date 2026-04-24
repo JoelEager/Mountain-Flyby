@@ -9,70 +9,43 @@ pub fn generate_mountain_ridge() -> (Vec<Vertex>, Vec<u32>) {
 
     let scale = 0.5;
 
-    // Generate ground vertices
-    for z in 0..depth {
-        for x in 0..width {
-            let px = (x as f32 - width as f32 / 2.0) * scale;
-            let pz = -(z as f32) * scale;
+    // Generate ground and cloud vertices
+    for is_cloud in 0..2 {
+        let w = is_cloud as f32 + 1.0;
+        for z in 0..depth {
+            for x in 0..width {
+                let px = (x as f32 - width as f32 / 2.0) * scale;
+                let pz = -(z as f32) * scale;
 
-            // Note: The height (pos.y) and color values are entirely computed in the vertex shader (shader/mountain.vert).
-            // We only need to provide the X and Z grid coordinates here.
-            vertices.push(Vertex {
-                pos: [px, 0.0, pz, 1.0],
-            });
+                // Note: The height (pos.y) and color values are entirely computed in the vertex shader (shader/mountain.vert).
+                // We only need to provide the X and Z grid coordinates here.
+                vertices.push(Vertex {
+                    pos: [px, 0.0, pz, w],
+                });
+            }
         }
     }
 
-    // Generate cloud vertices
-    for z in 0..depth {
-        for x in 0..width {
-            let px = (x as f32 - width as f32 / 2.0) * scale;
-            let pz = -(z as f32) * scale;
+    // Generate ground and cloud indices
+    for is_cloud in 0..2 {
+        let offset = is_cloud as u32 * (width * depth) as u32;
+        for z in 0..depth - 1 {
+            for x in 0..width - 1 {
+                let top_left = offset + (z * width + x) as u32;
+                let top_right = top_left + 1;
+                let bottom_left = offset + ((z + 1) * width + x) as u32;
+                let bottom_right = bottom_left + 1;
 
-            vertices.push(Vertex {
-                pos: [px, 0.0, pz, 2.0],
-            });
-        }
-    }
+                // First triangle
+                indices.push(top_left);
+                indices.push(bottom_left);
+                indices.push(top_right);
 
-    // Generate ground indices
-    for z in 0..depth - 1 {
-        for x in 0..width - 1 {
-            let top_left = (z * width + x) as u32;
-            let top_right = top_left + 1;
-            let bottom_left = ((z + 1) * width + x) as u32;
-            let bottom_right = bottom_left + 1;
-
-            // First triangle
-            indices.push(top_left);
-            indices.push(bottom_left);
-            indices.push(top_right);
-
-            // Second triangle
-            indices.push(top_right);
-            indices.push(bottom_left);
-            indices.push(bottom_right);
-        }
-    }
-
-    // Generate cloud indices
-    let offset = (width * depth) as u32;
-    for z in 0..depth - 1 {
-        for x in 0..width - 1 {
-            let top_left = offset + (z * width + x) as u32;
-            let top_right = top_left + 1;
-            let bottom_left = offset + ((z + 1) * width + x) as u32;
-            let bottom_right = bottom_left + 1;
-
-            // First triangle
-            indices.push(top_left);
-            indices.push(bottom_left);
-            indices.push(top_right);
-
-            // Second triangle
-            indices.push(top_right);
-            indices.push(bottom_left);
-            indices.push(bottom_right);
+                // Second triangle
+                indices.push(top_right);
+                indices.push(bottom_left);
+                indices.push(bottom_right);
+            }
         }
     }
 
