@@ -17,6 +17,8 @@ need to compile them to run the demo. However, if you modify the GLSL shaders
 You can use `glslc` (included in the Vulkan SDK) to compile the shaders:
 
 ```bash
-glslc shader/landscape.vert -o shader/vert.spv
-glslc shader/landscape.frag -o shader/frag.spv
+glslangValidator -V shader/terrain.vert -o shader/terrain_vert.spv
+glslangValidator -V shader/terrain.frag -o shader/terrain_frag.spv
+glslangValidator -V shader/cloud.vert -o shader/cloud_vert.spv
+glslangValidator -V shader/cloud.frag -o shader/cloud_frag.spv
 ```

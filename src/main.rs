@@ -556,6 +556,20 @@ fn main() -> Result<(), Box<dyn Error>> {
             .logic_op(vk::LogicOp::CLEAR)
             .attachments(&color_blend_attachment_states);
 
+        let cloud_color_blend_attachment_states = [vk::PipelineColorBlendAttachmentState {
+            blend_enable: 1, // Enable blending for clouds
+            src_color_blend_factor: vk::BlendFactor::SRC_ALPHA,
+            dst_color_blend_factor: vk::BlendFactor::ONE_MINUS_SRC_ALPHA,
+            color_blend_op: vk::BlendOp::ADD,
+            src_alpha_blend_factor: vk::BlendFactor::ONE,
+            dst_alpha_blend_factor: vk::BlendFactor::ZERO,
+            alpha_blend_op: vk::BlendOp::ADD,
+            color_write_mask: vk::ColorComponentFlags::RGBA,
+        }];
+        let cloud_color_blend_state = vk::PipelineColorBlendStateCreateInfo::default()
+            .logic_op(vk::LogicOp::CLEAR)
+            .attachments(&cloud_color_blend_attachment_states);
+
         let dynamic_state = [vk::DynamicState::VIEWPORT, vk::DynamicState::SCISSOR];
         let dynamic_state_info =
             vk::PipelineDynamicStateCreateInfo::default().dynamic_states(&dynamic_state);
@@ -589,7 +603,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             },
         ];
 
-        let cloud_graphic_pipeline_infos = graphic_pipeline_infos.clone().stages(&cloud_shader_stage_create_infos);
+        let cloud_graphic_pipeline_infos = graphic_pipeline_infos.clone().stages(&cloud_shader_stage_create_infos).color_blend_state(&cloud_color_blend_state);
 
         let graphics_pipelines = base
             .device
