@@ -217,7 +217,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         // The last two arguments set the near and far clipping planes
         let mut proj = cgmath::perspective(Deg(90.0), window_width as f32 / window_height as f32, 0.1, 500.0);
         proj[1][1] *= -1.0; // Vulkan Y is down
-        let model = Matrix4::identity();
+        let speed = 5.0; // Units per second
+        let model = Matrix4::from_translation(Vector3::new(0.0, -2.0, 0.0));
 
         let uniform_color_buffer_data = UniformBufferObject {
             mvp: proj * view * model,
@@ -483,11 +484,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             let elapsed = start_time.elapsed().as_secs_f32();
 
             // Flyby effect: terrain mesh stays fixed, offset translates the terrain generation inside the shader
-            let speed = 5.0; // Units per second
-            let model = Matrix4::from_translation(Vector3::new(0.0, -2.0, 0.0));
-
             let ubo = UniformBufferObject {
-                mvp: proj * view * model,
+                mvp: uniform_color_buffer_data.mvp,
                 offset: -elapsed * speed,
             };
             let mut uniform_aligned_slice = Align::new(
