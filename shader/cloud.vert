@@ -34,10 +34,8 @@ void main() {
                         + sin(px * 0.3 + world_z * 0.2) * 0.25;
 
     o_color = vec4(1.0, 1.0, 1.0, 0.0);
-    if (cloud_density > 0.3) {
-        o_color.a = cloud_density;
-        height += (cloud_density - 0.3) * 5.0;
-    }
+    o_color.a = smoothstep(0.3, 0.5, cloud_density);
+    height += max(0.0, cloud_density - 0.3) * 5.0;
 
     // Calculate the z remainder to smooth out the stepped terrain movement
     float offset_remainder = ubo.offset - snapped_offset; // Always between 0.0 and GRID_SCALE
