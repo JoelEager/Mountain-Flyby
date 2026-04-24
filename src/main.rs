@@ -1,6 +1,5 @@
 #![warn(unused_qualifications)]
 
-use std::default::Default;
 use std::error::Error;
 use std::io::Cursor;
 use std::os::raw::c_void;
@@ -107,12 +106,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // 3. Setup Index Buffer for drawing
         // Creates a device-visible buffer to hold the indices used to draw the model.
-        let index_buffer_info = vk::BufferCreateInfo {
-            size: (index_buffer_data.len() * size_of::<u32>()) as u64,
-            usage: vk::BufferUsageFlags::INDEX_BUFFER,
-            sharing_mode: vk::SharingMode::EXCLUSIVE,
-            ..Default::default()
-        };
+        let index_buffer_info = vk::BufferCreateInfo::default()
+            .size((index_buffer_data.len() * size_of::<u32>()) as u64)
+            .usage(vk::BufferUsageFlags::INDEX_BUFFER)
+            .sharing_mode(vk::SharingMode::EXCLUSIVE);
         let index_buffer = base.device.create_buffer(&index_buffer_info, None).unwrap();
         let index_buffer_memory_req = base.device.get_buffer_memory_requirements(index_buffer);
         let index_buffer_memory_index = find_memorytype_index(
@@ -152,12 +149,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // 4. Setup Vertex Input Buffer
         // Creates a device-visible buffer to hold the vertex data (position, uv).
-        let vertex_input_buffer_info = vk::BufferCreateInfo {
-            size: (vertices.len() * size_of::<Vertex>()) as u64,
-            usage: vk::BufferUsageFlags::VERTEX_BUFFER,
-            sharing_mode: vk::SharingMode::EXCLUSIVE,
-            ..Default::default()
-        };
+        let vertex_input_buffer_info = vk::BufferCreateInfo::default()
+            .size((vertices.len() * size_of::<Vertex>()) as u64)
+            .usage(vk::BufferUsageFlags::VERTEX_BUFFER)
+            .sharing_mode(vk::SharingMode::EXCLUSIVE);
         let vertex_input_buffer = base
             .device
             .create_buffer(&vertex_input_buffer_info, None)
@@ -204,7 +199,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         // 5. Uniform Buffer setup (MVP matrix)
         // Creates a buffer to pass the Model-View-Projection matrix to the shader.
-        use cgmath::{Matrix4, Point3, Vector3, Deg};
+        use cgmath::{Deg, Matrix4, Point3, Vector3};
 
         let view = Matrix4::look_at_rh(
             // Eye: Position of the camera in world space
@@ -229,12 +224,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             mvp: proj * view * model,
             offset: 0.0,
         };
-        let uniform_color_buffer_info = vk::BufferCreateInfo {
-            size: size_of_val(&uniform_color_buffer_data) as u64,
-            usage: vk::BufferUsageFlags::UNIFORM_BUFFER,
-            sharing_mode: vk::SharingMode::EXCLUSIVE,
-            ..Default::default()
-        };
+        let uniform_color_buffer_info = vk::BufferCreateInfo::default()
+            .size(size_of_val(&uniform_color_buffer_data) as u64)
+            .usage(vk::BufferUsageFlags::UNIFORM_BUFFER)
+            .sharing_mode(vk::SharingMode::EXCLUSIVE);
         let uniform_color_buffer = base
             .device
             .create_buffer(&uniform_color_buffer_info, None)
@@ -616,14 +609,13 @@ fn main() -> Result<(), Box<dyn Error>> {
                 )
                 .expect("queue submit failed.");
 
-            let present_info = vk::PresentInfoKHR {
-                wait_semaphore_count: 1,
-                p_wait_semaphores: &base.rendering_complete_semaphores[present_index as usize],
-                swapchain_count: 1,
-                p_swapchains: &base.swapchain,
-                p_image_indices: &present_index,
-                ..Default::default()
-            };
+            let wait_semaphores = [base.rendering_complete_semaphores[present_index as usize]];
+            let swapchains = [base.swapchain];
+            let image_indices = [present_index];
+            let present_info = vk::PresentInfoKHR::default()
+                .wait_semaphores(&wait_semaphores)
+                .swapchains(&swapchains)
+                .image_indices(&image_indices);
             base.swapchain_loader
                 .queue_present(base.present_queue, &present_info)
                 .unwrap();
