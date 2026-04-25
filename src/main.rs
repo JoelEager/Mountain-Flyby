@@ -104,56 +104,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         let (terrain_vertices, terrain_index_buffer_data) = mesh::generate_terrain();
         let (cloud_vertices, cloud_index_buffer_data) = mesh::generate_clouds();
 
-        unsafe fn create_device_local_buffer<T: Copy>(
-            base: &VulkanBase,
-            data: &[T],
-            usage: vk::BufferUsageFlags,
-        ) -> (vk::Buffer, vk::DeviceMemory) { unsafe {
-            let buffer_info = vk::BufferCreateInfo::default()
-                .size((data.len() * size_of::<T>()) as u64)
-                .usage(usage)
-                .sharing_mode(vk::SharingMode::EXCLUSIVE);
-            let buffer = base.device.create_buffer(&buffer_info, None).unwrap();
-            let memory_req = base.device.get_buffer_memory_requirements(buffer);
-            let memory_index = find_memorytype_index(
-                &memory_req,
-                &base.device_memory_properties,
-                vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
-            )
-            .expect("Unable to find suitable memorytype for the buffer.");
-            let allocate_info = vk::MemoryAllocateInfo {
-                allocation_size: memory_req.size,
-                memory_type_index: memory_index,
-                ..Default::default()
-            };
-            let memory = base
-                .device
-                .allocate_memory(&allocate_info, None)
-                .unwrap();
-            let ptr: *mut std::os::raw::c_void = base
-                .device
-                .map_memory(
-                    memory,
-                    0,
-                    memory_req.size,
-                    vk::MemoryMapFlags::empty(),
-                )
-                .unwrap();
-            let mut slice = Align::new(ptr, align_of::<T>() as u64, memory_req.size);
-            slice.copy_from_slice(data);
-            base.device.unmap_memory(memory);
-            base.device.bind_buffer_memory(buffer, memory, 0).unwrap();
-            (buffer, memory)
-        }}
-
         // 3. Setup Index Buffers for drawing
         let (terrain_index_buffer, terrain_index_buffer_memory) = create_device_local_buffer(&base, &terrain_index_buffer_data, vk::BufferUsageFlags::INDEX_BUFFER);
-
         let (cloud_index_buffer, cloud_index_buffer_memory) = create_device_local_buffer(&base, &cloud_index_buffer_data, vk::BufferUsageFlags::INDEX_BUFFER);
 
         // 4. Setup Vertex Input Buffers
         let (terrain_vertex_input_buffer, terrain_vertex_input_buffer_memory) = create_device_local_buffer(&base, &terrain_vertices, vk::BufferUsageFlags::VERTEX_BUFFER);
-
         let (cloud_vertex_input_buffer, cloud_vertex_input_buffer_memory) = create_device_local_buffer(&base, &cloud_vertices, vk::BufferUsageFlags::VERTEX_BUFFER);
 
         // 5. Uniform Buffer setup (MVP matrix)
