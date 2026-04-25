@@ -2,7 +2,6 @@
 
 use std::error::Error;
 use std::io::Cursor;
-use std::os::raw::c_void;
 
 use ash::util::*;
 use ash::vk;
@@ -105,191 +104,57 @@ fn main() -> Result<(), Box<dyn Error>> {
         let (terrain_vertices, terrain_index_buffer_data) = mesh::generate_terrain();
         let (cloud_vertices, cloud_index_buffer_data) = mesh::generate_clouds();
 
-        // 3. Setup Index Buffer for drawing
-        // Creates a device-visible buffer to hold the indices used to draw the model.
-        let terrain_index_buffer_info = vk::BufferCreateInfo::default()
-            .size((terrain_index_buffer_data.len() * size_of::<u32>()) as u64)
-            .usage(vk::BufferUsageFlags::INDEX_BUFFER)
-            .sharing_mode(vk::SharingMode::EXCLUSIVE);
-        let terrain_index_buffer = base.device.create_buffer(&terrain_index_buffer_info, None).unwrap();
-        let terrain_index_buffer_memory_req = base.device.get_buffer_memory_requirements(terrain_index_buffer);
-        let terrain_index_buffer_memory_index = find_memorytype_index(
-            &terrain_index_buffer_memory_req,
-            &base.device_memory_properties,
-            vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
-        )
-        .expect("Unable to find suitable memorytype for the index buffer.");
-        let terrain_index_allocate_info = vk::MemoryAllocateInfo {
-            allocation_size: terrain_index_buffer_memory_req.size,
-            memory_type_index: terrain_index_buffer_memory_index,
-            ..Default::default()
-        };
-        let terrain_index_buffer_memory = base
-            .device
-            .allocate_memory(&terrain_index_allocate_info, None)
-            .unwrap();
-        let terrain_index_ptr: *mut c_void = base
-            .device
-            .map_memory(
-                terrain_index_buffer_memory,
-                0,
-                terrain_index_buffer_memory_req.size,
-                vk::MemoryMapFlags::empty(),
+        unsafe fn create_device_local_buffer<T: Copy>(
+            base: &VulkanBase,
+            data: &[T],
+            usage: vk::BufferUsageFlags,
+        ) -> (vk::Buffer, vk::DeviceMemory) { unsafe {
+            let buffer_info = vk::BufferCreateInfo::default()
+                .size((data.len() * size_of::<T>()) as u64)
+                .usage(usage)
+                .sharing_mode(vk::SharingMode::EXCLUSIVE);
+            let buffer = base.device.create_buffer(&buffer_info, None).unwrap();
+            let memory_req = base.device.get_buffer_memory_requirements(buffer);
+            let memory_index = find_memorytype_index(
+                &memory_req,
+                &base.device_memory_properties,
+                vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
             )
-            .unwrap();
-        let mut terrain_index_slice = Align::new(
-            terrain_index_ptr,
-            align_of::<u32>() as u64,
-            terrain_index_buffer_memory_req.size,
-        );
-        terrain_index_slice.copy_from_slice(&terrain_index_buffer_data);
-        base.device.unmap_memory(terrain_index_buffer_memory);
-        base.device
-            .bind_buffer_memory(terrain_index_buffer, terrain_index_buffer_memory, 0)
-            .unwrap();
+            .expect("Unable to find suitable memorytype for the buffer.");
+            let allocate_info = vk::MemoryAllocateInfo {
+                allocation_size: memory_req.size,
+                memory_type_index: memory_index,
+                ..Default::default()
+            };
+            let memory = base
+                .device
+                .allocate_memory(&allocate_info, None)
+                .unwrap();
+            let ptr: *mut std::os::raw::c_void = base
+                .device
+                .map_memory(
+                    memory,
+                    0,
+                    memory_req.size,
+                    vk::MemoryMapFlags::empty(),
+                )
+                .unwrap();
+            let mut slice = Align::new(ptr, align_of::<T>() as u64, memory_req.size);
+            slice.copy_from_slice(data);
+            base.device.unmap_memory(memory);
+            base.device.bind_buffer_memory(buffer, memory, 0).unwrap();
+            (buffer, memory)
+        }}
 
-        // 3. Setup Cloud Index Buffer for drawing
-        // Creates a device-visible buffer to hold the indices used to draw the model.
-        let cloud_index_buffer_info = vk::BufferCreateInfo::default()
-            .size((cloud_index_buffer_data.len() * size_of::<u32>()) as u64)
-            .usage(vk::BufferUsageFlags::INDEX_BUFFER)
-            .sharing_mode(vk::SharingMode::EXCLUSIVE);
-        let cloud_index_buffer = base.device.create_buffer(&cloud_index_buffer_info, None).unwrap();
-        let cloud_index_buffer_memory_req = base.device.get_buffer_memory_requirements(cloud_index_buffer);
-        let cloud_index_buffer_memory_index = find_memorytype_index(
-            &cloud_index_buffer_memory_req,
-            &base.device_memory_properties,
-            vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
-        )
-        .expect("Unable to find suitable memorytype for the index buffer.");
-        let cloud_index_allocate_info = vk::MemoryAllocateInfo {
-            allocation_size: cloud_index_buffer_memory_req.size,
-            memory_type_index: cloud_index_buffer_memory_index,
-            ..Default::default()
-        };
-        let cloud_index_buffer_memory = base
-            .device
-            .allocate_memory(&cloud_index_allocate_info, None)
-            .unwrap();
-        let cloud_index_ptr: *mut c_void = base
-            .device
-            .map_memory(
-                cloud_index_buffer_memory,
-                0,
-                cloud_index_buffer_memory_req.size,
-                vk::MemoryMapFlags::empty(),
-            )
-            .unwrap();
-        let mut cloud_index_slice = Align::new(
-            cloud_index_ptr,
-            align_of::<u32>() as u64,
-            cloud_index_buffer_memory_req.size,
-        );
-        cloud_index_slice.copy_from_slice(&cloud_index_buffer_data);
-        base.device.unmap_memory(cloud_index_buffer_memory);
-        base.device
-            .bind_buffer_memory(cloud_index_buffer, cloud_index_buffer_memory, 0)
-            .unwrap();
+        // 3. Setup Index Buffers for drawing
+        let (terrain_index_buffer, terrain_index_buffer_memory) = create_device_local_buffer(&base, &terrain_index_buffer_data, vk::BufferUsageFlags::INDEX_BUFFER);
 
-        // 4. Setup Vertex Input Buffer
-        // Creates a device-visible buffer to hold the vertex data (position, uv).
-        let terrain_vertex_input_buffer_info = vk::BufferCreateInfo::default()
-            .size((terrain_vertices.len() * size_of::<Vertex>()) as u64)
-            .usage(vk::BufferUsageFlags::VERTEX_BUFFER)
-            .sharing_mode(vk::SharingMode::EXCLUSIVE);
-        let terrain_vertex_input_buffer = base
-            .device
-            .create_buffer(&terrain_vertex_input_buffer_info, None)
-            .unwrap();
-        let terrain_vertex_input_buffer_memory_req = base
-            .device
-            .get_buffer_memory_requirements(terrain_vertex_input_buffer);
-        let terrain_vertex_input_buffer_memory_index = find_memorytype_index(
-            &terrain_vertex_input_buffer_memory_req,
-            &base.device_memory_properties,
-            vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
-        )
-        .expect("Unable to find suitable memorytype for the vertex buffer.");
+        let (cloud_index_buffer, cloud_index_buffer_memory) = create_device_local_buffer(&base, &cloud_index_buffer_data, vk::BufferUsageFlags::INDEX_BUFFER);
 
-        let terrain_vertex_buffer_allocate_info = vk::MemoryAllocateInfo {
-            allocation_size: terrain_vertex_input_buffer_memory_req.size,
-            memory_type_index: terrain_vertex_input_buffer_memory_index,
-            ..Default::default()
-        };
-        let terrain_vertex_input_buffer_memory = base
-            .device
-            .allocate_memory(&terrain_vertex_buffer_allocate_info, None)
-            .unwrap();
+        // 4. Setup Vertex Input Buffers
+        let (terrain_vertex_input_buffer, terrain_vertex_input_buffer_memory) = create_device_local_buffer(&base, &terrain_vertices, vk::BufferUsageFlags::VERTEX_BUFFER);
 
-        let terrain_vert_ptr = base
-            .device
-            .map_memory(
-                terrain_vertex_input_buffer_memory,
-                0,
-                terrain_vertex_input_buffer_memory_req.size,
-                vk::MemoryMapFlags::empty(),
-            )
-            .unwrap();
-        let mut terrain_slice = Align::new(
-            terrain_vert_ptr,
-            align_of::<Vertex>() as u64,
-            terrain_vertex_input_buffer_memory_req.size,
-        );
-        terrain_slice.copy_from_slice(&terrain_vertices);
-        base.device.unmap_memory(terrain_vertex_input_buffer_memory);
-        base.device
-            .bind_buffer_memory(terrain_vertex_input_buffer, terrain_vertex_input_buffer_memory, 0)
-            .unwrap();
-
-        // 4. Setup Cloud Vertex Input Buffer
-        // Creates a device-visible buffer to hold the vertex data (position, uv).
-        let cloud_vertex_input_buffer_info = vk::BufferCreateInfo::default()
-            .size((cloud_vertices.len() * size_of::<Vertex>()) as u64)
-            .usage(vk::BufferUsageFlags::VERTEX_BUFFER)
-            .sharing_mode(vk::SharingMode::EXCLUSIVE);
-        let cloud_vertex_input_buffer = base
-            .device
-            .create_buffer(&cloud_vertex_input_buffer_info, None)
-            .unwrap();
-        let cloud_vertex_input_buffer_memory_req = base
-            .device
-            .get_buffer_memory_requirements(cloud_vertex_input_buffer);
-        let cloud_vertex_input_buffer_memory_index = find_memorytype_index(
-            &cloud_vertex_input_buffer_memory_req,
-            &base.device_memory_properties,
-            vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
-        )
-        .expect("Unable to find suitable memorytype for the vertex buffer.");
-
-        let cloud_vertex_buffer_allocate_info = vk::MemoryAllocateInfo {
-            allocation_size: cloud_vertex_input_buffer_memory_req.size,
-            memory_type_index: cloud_vertex_input_buffer_memory_index,
-            ..Default::default()
-        };
-        let cloud_vertex_input_buffer_memory = base
-            .device
-            .allocate_memory(&cloud_vertex_buffer_allocate_info, None)
-            .unwrap();
-
-        let cloud_vert_ptr = base
-            .device
-            .map_memory(
-                cloud_vertex_input_buffer_memory,
-                0,
-                cloud_vertex_input_buffer_memory_req.size,
-                vk::MemoryMapFlags::empty(),
-            )
-            .unwrap();
-        let mut cloud_slice = Align::new(
-            cloud_vert_ptr,
-            align_of::<Vertex>() as u64,
-            cloud_vertex_input_buffer_memory_req.size,
-        );
-        cloud_slice.copy_from_slice(&cloud_vertices);
-        base.device.unmap_memory(cloud_vertex_input_buffer_memory);
-        base.device
-            .bind_buffer_memory(cloud_vertex_input_buffer, cloud_vertex_input_buffer_memory, 0)
-            .unwrap();
+        let (cloud_vertex_input_buffer, cloud_vertex_input_buffer_memory) = create_device_local_buffer(&base, &cloud_vertices, vk::BufferUsageFlags::VERTEX_BUFFER);
 
         // 5. Uniform Buffer setup (MVP matrix)
         // Creates a buffer to pass the Model-View-Projection matrix to the shader.

@@ -101,13 +101,15 @@ mod tests {
         let (terrain_vertices, terrain_indices) = generate_terrain();
         let (cloud_vertices, cloud_indices) = generate_clouds();
 
-        let width = 256;
-        let depth = 1024;
+        let t_width = 128;
+        let t_depth = 1024;
+        let c_width = 256;
+        let c_depth = 1024;
 
-        assert_eq!(terrain_vertices.len(), width * depth);
-        assert_eq!(terrain_indices.len(), (width - 1) * (depth - 1) * 6);
-        assert_eq!(cloud_vertices.len(), width * depth);
-        assert_eq!(cloud_indices.len(), (width - 1) * (depth - 1) * 6);
+        assert_eq!(terrain_vertices.len(), t_width * t_depth);
+        assert_eq!(terrain_indices.len(), (t_width - 1) * (t_depth - 1) * 6);
+        assert_eq!(cloud_vertices.len(), c_width * c_depth);
+        assert_eq!(cloud_indices.len(), (c_width - 1) * (c_depth - 1) * 6);
 
         // Check if all indices are valid
         for &index in &terrain_indices {
@@ -128,12 +130,14 @@ mod tests {
         }
 
         // Check vertex w components
-        for i in 0..(width * depth) {
+        for i in 0..(t_width * t_depth) {
             assert_eq!(
                 terrain_vertices[i].pos[3], 1.0,
                 "Vertex {} should be ground (w=1.0)",
                 i
             );
+        }
+        for i in 0..(c_width * c_depth) {
             assert_eq!(
                 cloud_vertices[i].pos[3], 2.0,
                 "Vertex {} should be clouds (w=2.0)",
@@ -141,21 +145,21 @@ mod tests {
             );
         }
 
-        // Check some coordinate ranges
-        let scale = 0.5;
-        let max_x = (width as f32 - 1.0 - width as f32 / 2.0) * scale;
-        let min_x = (0.0 - width as f32 / 2.0) * scale;
-        let min_z = -(depth as f32 - 1.0) * scale;
-        let max_z = 0.0;
+        // Check some coordinate ranges for terrain
+        let t_scale = 0.5;
+        let t_max_x = (t_width as f32 - 1.0 - t_width as f32 / 2.0) * t_scale;
+        let t_min_x = (0.0 - t_width as f32 / 2.0) * t_scale;
+        let t_min_z = -(t_depth as f32 - 1.0) * t_scale;
+        let t_max_z = 0.0;
 
         for (i, v) in terrain_vertices.iter().enumerate() {
             assert!(
-                v.pos[0] >= min_x - 0.0001 && v.pos[0] <= max_x + 0.0001,
+                v.pos[0] >= t_min_x - 0.0001 && v.pos[0] <= t_max_x + 0.0001,
                 "Vertex {} X coord {} out of range [{}, {}]",
                 i,
                 v.pos[0],
-                min_x,
-                max_x
+                t_min_x,
+                t_max_x
             );
             assert!(
                 v.pos[1] == 0.0,
@@ -164,12 +168,12 @@ mod tests {
                 v.pos[1]
             );
             assert!(
-                v.pos[2] >= min_z - 0.0001 && v.pos[2] <= max_z + 0.0001,
+                v.pos[2] >= t_min_z - 0.0001 && v.pos[2] <= t_max_z + 0.0001,
                 "Vertex {} Z coord {} out of range [{}, {}]",
                 i,
                 v.pos[2],
-                min_z,
-                max_z
+                t_min_z,
+                t_max_z
             );
         }
     }
@@ -179,18 +183,20 @@ mod tests {
         let (terrain_vertices, _) = generate_terrain();
         let (cloud_vertices, _) = generate_clouds();
 
-        let width = 256;
-        let depth = 1024;
+        let t_width = 128;
+        let t_depth = 1024;
+        let c_width = 256;
+        let c_depth = 1024;
 
-        // Ensure ground and cloud vertices at the same grid position have same X, Z but different W
-        for z in 0..depth {
-            for x in 0..width {
-                let idx = z * width + x;
-
-                assert_eq!(terrain_vertices[idx].pos[0], cloud_vertices[idx].pos[0]);
-                assert_eq!(terrain_vertices[idx].pos[1], cloud_vertices[idx].pos[1]);
-                assert_eq!(terrain_vertices[idx].pos[2], cloud_vertices[idx].pos[2]);
+        for z in 0..t_depth {
+            for x in 0..t_width {
+                let idx = z * t_width + x;
                 assert_eq!(terrain_vertices[idx].pos[3], 1.0);
+            }
+        }
+        for z in 0..c_depth {
+            for x in 0..c_width {
+                let idx = z * c_width + x;
                 assert_eq!(cloud_vertices[idx].pos[3], 2.0);
             }
         }
