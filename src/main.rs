@@ -105,12 +105,26 @@ fn main() -> Result<(), Box<dyn Error>> {
         let (cloud_vertices, cloud_index_buffer_data) = mesh::generate_clouds();
 
         // 3. Setup Index Buffers for drawing
-        let (terrain_index_buffer, terrain_index_buffer_memory) = create_device_local_buffer(&base, &terrain_index_buffer_data, vk::BufferUsageFlags::INDEX_BUFFER);
-        let (cloud_index_buffer, cloud_index_buffer_memory) = create_device_local_buffer(&base, &cloud_index_buffer_data, vk::BufferUsageFlags::INDEX_BUFFER);
+        let (terrain_index_buffer, terrain_index_buffer_memory) = create_device_local_buffer(
+            &base,
+            &terrain_index_buffer_data,
+            vk::BufferUsageFlags::INDEX_BUFFER,
+        );
+        let (cloud_index_buffer, cloud_index_buffer_memory) = create_device_local_buffer(
+            &base,
+            &cloud_index_buffer_data,
+            vk::BufferUsageFlags::INDEX_BUFFER,
+        );
 
         // 4. Setup Vertex Input Buffers
-        let (terrain_vertex_input_buffer, terrain_vertex_input_buffer_memory) = create_device_local_buffer(&base, &terrain_vertices, vk::BufferUsageFlags::VERTEX_BUFFER);
-        let (cloud_vertex_input_buffer, cloud_vertex_input_buffer_memory) = create_device_local_buffer(&base, &cloud_vertices, vk::BufferUsageFlags::VERTEX_BUFFER);
+        let (terrain_vertex_input_buffer, terrain_vertex_input_buffer_memory) =
+            create_device_local_buffer(
+                &base,
+                &terrain_vertices,
+                vk::BufferUsageFlags::VERTEX_BUFFER,
+            );
+        let (cloud_vertex_input_buffer, cloud_vertex_input_buffer_memory) =
+            create_device_local_buffer(&base, &cloud_vertices, vk::BufferUsageFlags::VERTEX_BUFFER);
 
         // 5. Uniform Buffer setup (MVP matrix)
         // Creates a buffer to pass the Model-View-Projection matrix to the shader.
@@ -260,12 +274,14 @@ fn main() -> Result<(), Box<dyn Error>> {
             .create_shader_module(&frag_shader_info, None)
             .expect("Fragment shader module error");
 
-        let mut cloud_vertex_spv_file = Cursor::new(&include_bytes!("../shader/cloud_vert.spv")[..]);
+        let mut cloud_vertex_spv_file =
+            Cursor::new(&include_bytes!("../shader/cloud_vert.spv")[..]);
         let mut cloud_frag_spv_file = Cursor::new(&include_bytes!("../shader/cloud_frag.spv")[..]);
 
         let cloud_vertex_code =
             read_spv(&mut cloud_vertex_spv_file).expect("Failed to read vertex shader spv file");
-        let cloud_vertex_shader_info = vk::ShaderModuleCreateInfo::default().code(&cloud_vertex_code);
+        let cloud_vertex_shader_info =
+            vk::ShaderModuleCreateInfo::default().code(&cloud_vertex_code);
 
         let cloud_frag_code =
             read_spv(&mut cloud_frag_spv_file).expect("Failed to read fragment shader spv file");
@@ -365,7 +381,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         let color_blend_attachment_states = [vk::PipelineColorBlendAttachmentState::default()
             .color_write_mask(
-                vk::ColorComponentFlags::R | vk::ColorComponentFlags::G | vk::ColorComponentFlags::B,
+                vk::ColorComponentFlags::R
+                    | vk::ColorComponentFlags::G
+                    | vk::ColorComponentFlags::B,
             )];
         let color_blend_state = vk::PipelineColorBlendStateCreateInfo::default()
             .logic_op(vk::LogicOp::CLEAR)
@@ -402,7 +420,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             .layout(pipeline_layout)
             .render_pass(renderpass);
 
-
         let cloud_shader_stage_create_infos = [
             vk::PipelineShaderStageCreateInfo {
                 module: cloud_vertex_shader_module,
@@ -418,11 +435,18 @@ fn main() -> Result<(), Box<dyn Error>> {
             },
         ];
 
-        let cloud_graphic_pipeline_infos = graphic_pipeline_infos.clone().stages(&cloud_shader_stage_create_infos).color_blend_state(&cloud_color_blend_state);
+        let cloud_graphic_pipeline_infos = graphic_pipeline_infos
+            .clone()
+            .stages(&cloud_shader_stage_create_infos)
+            .color_blend_state(&cloud_color_blend_state);
 
         let graphics_pipelines = base
             .device
-            .create_graphics_pipelines(vk::PipelineCache::null(), &[graphic_pipeline_infos, cloud_graphic_pipeline_infos], None)
+            .create_graphics_pipelines(
+                vk::PipelineCache::null(),
+                &[graphic_pipeline_infos, cloud_graphic_pipeline_infos],
+                None,
+            )
             .unwrap();
 
         let terrain_graphic_pipeline = graphics_pipelines[0];
@@ -623,19 +647,24 @@ fn main() -> Result<(), Box<dyn Error>> {
         base.device.destroy_pipeline_layout(pipeline_layout, None);
         base.device
             .destroy_shader_module(vertex_shader_module, None);
-        base.device.destroy_shader_module(cloud_vertex_shader_module, None);
+        base.device
+            .destroy_shader_module(cloud_vertex_shader_module, None);
         base.device
             .destroy_shader_module(fragment_shader_module, None);
-        base.device.destroy_shader_module(cloud_fragment_shader_module, None);
+        base.device
+            .destroy_shader_module(cloud_fragment_shader_module, None);
         base.device.free_memory(terrain_index_buffer_memory, None);
         base.device.free_memory(cloud_index_buffer_memory, None);
         base.device.destroy_buffer(terrain_index_buffer, None);
         base.device.destroy_buffer(cloud_index_buffer, None);
         base.device.free_memory(uniform_color_buffer_memory, None);
         base.device.destroy_buffer(uniform_color_buffer, None);
-        base.device.free_memory(terrain_vertex_input_buffer_memory, None);
-        base.device.free_memory(cloud_vertex_input_buffer_memory, None);
-        base.device.destroy_buffer(terrain_vertex_input_buffer, None);
+        base.device
+            .free_memory(terrain_vertex_input_buffer_memory, None);
+        base.device
+            .free_memory(cloud_vertex_input_buffer_memory, None);
+        base.device
+            .destroy_buffer(terrain_vertex_input_buffer, None);
         base.device.destroy_buffer(cloud_vertex_input_buffer, None);
         for &descriptor_set_layout in desc_set_layouts.iter() {
             base.device
