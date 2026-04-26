@@ -22,3 +22,6 @@ glslangValidator -V shader/terrain.frag -o shader/terrain_frag.spv
 glslangValidator -V shader/cloud.vert -o shader/cloud_vert.spv
 glslangValidator -V shader/cloud.frag -o shader/cloud_frag.spv
 ```
+
+## Preview
+![Gif recording of program running](recording.gif)
