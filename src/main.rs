@@ -366,15 +366,16 @@ fn main() -> Result<(), Box<dyn Error>> {
             .logic_op(vk::LogicOp::CLEAR)
             .attachments(&color_blend_attachment_states);
 
-        let cloud_color_blend_attachment_states = [vk::PipelineColorBlendAttachmentState::default()
-            .blend_enable(true) // Enable blending for clouds
-            .src_color_blend_factor(vk::BlendFactor::SRC_ALPHA)
-            .dst_color_blend_factor(vk::BlendFactor::ONE_MINUS_SRC_ALPHA)
-            .color_blend_op(vk::BlendOp::ADD)
-            .src_alpha_blend_factor(vk::BlendFactor::ONE)
-            .dst_alpha_blend_factor(vk::BlendFactor::ZERO)
-            .alpha_blend_op(vk::BlendOp::ADD)
-            .color_write_mask(vk::ColorComponentFlags::RGBA)];
+        let cloud_color_blend_attachment_states =
+            [vk::PipelineColorBlendAttachmentState::default()
+                .blend_enable(true) // Enable blending for clouds
+                .src_color_blend_factor(vk::BlendFactor::SRC_ALPHA)
+                .dst_color_blend_factor(vk::BlendFactor::ONE_MINUS_SRC_ALPHA)
+                .color_blend_op(vk::BlendOp::ADD)
+                .src_alpha_blend_factor(vk::BlendFactor::ONE)
+                .dst_alpha_blend_factor(vk::BlendFactor::ZERO)
+                .alpha_blend_op(vk::BlendOp::ADD)
+                .color_write_mask(vk::ColorComponentFlags::RGBA)];
         let cloud_color_blend_state = vk::PipelineColorBlendStateCreateInfo::default()
             .logic_op(vk::LogicOp::CLEAR)
             .attachments(&cloud_color_blend_attachment_states);

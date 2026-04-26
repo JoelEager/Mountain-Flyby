@@ -359,8 +359,7 @@ impl VulkanBase {
                 #[cfg(any(target_os = "macos", target_os = "ios"))]
                 ash::khr::portability_subset::NAME.as_ptr(),
             ];
-            let features = vk::PhysicalDeviceFeatures::default()
-                .shader_clip_distance(true);
+            let features = vk::PhysicalDeviceFeatures::default().shader_clip_distance(true);
             let priorities = [1.0];
 
             let queue_info = vk::DeviceQueueCreateInfo::default()
