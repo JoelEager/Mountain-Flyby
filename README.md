@@ -1,7 +1,8 @@
 # Mountain Flyby
-A procedurally generated graphics demo implemented in Rust. Targets [Vulkan](https://docs.vulkan.org/guide/latest/what_is_vulkan.html)
+A procedurally generated graphics demo implemented in Rust. Uses [Vulkan](https://docs.vulkan.org/guide/latest/what_is_vulkan.html)
 and tested on an AMD RX 6750, though it should compatible with most GPUs. 
-Developed using [Google Jules](https://jules.google.com/).
+Developed using [Google Jules](https://jules.google.com/). For an alternate 
+version that supports browsers see [this repo](https://github.com/JoelEager/Mountain-Flyby-WebGPU).
 
 ## Setup
 The `ash` crate requires that the Vulkan API be present on the path. For 
