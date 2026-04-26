@@ -110,6 +110,9 @@ unsafe extern "system" fn vulkan_debug_callback(
     vk::FALSE
 }
 
+/// # Safety
+/// This function executes unsafe Vulkan API calls. It relies on the provided `base` holding
+/// valid handles, and the allocated buffer memory being successfully retrieved and bound.
 pub unsafe fn create_device_local_buffer<T: Copy>(
     base: &VulkanBase,
     data: &[T],
@@ -117,7 +120,7 @@ pub unsafe fn create_device_local_buffer<T: Copy>(
 ) -> (vk::Buffer, vk::DeviceMemory) {
     unsafe {
         let buffer_info = vk::BufferCreateInfo::default()
-            .size((data.len() * size_of::<T>()) as u64)
+            .size(size_of_val(data) as u64)
             .usage(usage)
             .sharing_mode(vk::SharingMode::EXCLUSIVE);
         let buffer = base.device.create_buffer(&buffer_info, None).unwrap();
@@ -128,11 +131,9 @@ pub unsafe fn create_device_local_buffer<T: Copy>(
             vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
         )
         .expect("Unable to find suitable memorytype for the buffer.");
-        let allocate_info = vk::MemoryAllocateInfo {
-            allocation_size: memory_req.size,
-            memory_type_index: memory_index,
-            ..Default::default()
-        };
+        let allocate_info = vk::MemoryAllocateInfo::default()
+            .allocation_size(memory_req.size)
+            .memory_type_index(memory_index);
         let memory = base.device.allocate_memory(&allocate_info, None).unwrap();
         let ptr: *mut std::os::raw::c_void = base
             .device
@@ -358,10 +359,8 @@ impl VulkanBase {
                 #[cfg(any(target_os = "macos", target_os = "ios"))]
                 ash::khr::portability_subset::NAME.as_ptr(),
             ];
-            let features = vk::PhysicalDeviceFeatures {
-                shader_clip_distance: 1,
-                ..Default::default()
-            };
+            let features = vk::PhysicalDeviceFeatures::default()
+                .shader_clip_distance(true);
             let priorities = [1.0];
 
             let queue_info = vk::DeviceQueueCreateInfo::default()

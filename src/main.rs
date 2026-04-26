@@ -32,22 +32,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         // Render passes describe the attachments (like color and depth buffers)
         // that are used during rendering.
         let renderpass_attachments = [
-            vk::AttachmentDescription {
-                format: base.surface_format.format,
-                samples: vk::SampleCountFlags::TYPE_1,
-                load_op: vk::AttachmentLoadOp::CLEAR,
-                store_op: vk::AttachmentStoreOp::STORE,
-                final_layout: vk::ImageLayout::PRESENT_SRC_KHR,
-                ..Default::default()
-            },
-            vk::AttachmentDescription {
-                format: vk::Format::D16_UNORM,
-                samples: vk::SampleCountFlags::TYPE_1,
-                load_op: vk::AttachmentLoadOp::CLEAR,
-                initial_layout: vk::ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                final_layout: vk::ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                ..Default::default()
-            },
+            vk::AttachmentDescription::default()
+                .format(base.surface_format.format)
+                .samples(vk::SampleCountFlags::TYPE_1)
+                .load_op(vk::AttachmentLoadOp::CLEAR)
+                .store_op(vk::AttachmentStoreOp::STORE)
+                .final_layout(vk::ImageLayout::PRESENT_SRC_KHR),
+            vk::AttachmentDescription::default()
+                .format(vk::Format::D16_UNORM)
+                .samples(vk::SampleCountFlags::TYPE_1)
+                .load_op(vk::AttachmentLoadOp::CLEAR)
+                .initial_layout(vk::ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+                .final_layout(vk::ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL),
         ];
         let color_attachment_refs = [vk::AttachmentReference {
             attachment: 0,
@@ -57,14 +53,13 @@ fn main() -> Result<(), Box<dyn Error>> {
             attachment: 1,
             layout: vk::ImageLayout::DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
         };
-        let dependencies = [vk::SubpassDependency {
-            src_subpass: vk::SUBPASS_EXTERNAL,
-            src_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
-            dst_access_mask: vk::AccessFlags::COLOR_ATTACHMENT_READ
-                | vk::AccessFlags::COLOR_ATTACHMENT_WRITE,
-            dst_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
-            ..Default::default()
-        }];
+        let dependencies = [vk::SubpassDependency::default()
+            .src_subpass(vk::SUBPASS_EXTERNAL)
+            .src_stage_mask(vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
+            .dst_access_mask(
+                vk::AccessFlags::COLOR_ATTACHMENT_READ | vk::AccessFlags::COLOR_ATTACHMENT_WRITE,
+            )
+            .dst_stage_mask(vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)];
 
         let subpass = vk::SubpassDescription::default()
             .color_attachments(&color_attachment_refs)
@@ -171,11 +166,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         )
         .expect("Unable to find suitable memorytype for the vertex buffer.");
 
-        let uniform_color_buffer_allocate_info = vk::MemoryAllocateInfo {
-            allocation_size: uniform_color_buffer_memory_req.size,
-            memory_type_index: uniform_color_buffer_memory_index,
-            ..Default::default()
-        };
+        let uniform_color_buffer_allocate_info = vk::MemoryAllocateInfo::default()
+            .allocation_size(uniform_color_buffer_memory_req.size)
+            .memory_type_index(uniform_color_buffer_memory_index);
         let uniform_color_buffer_memory = base
             .device
             .allocate_memory(&uniform_color_buffer_allocate_info, None)
@@ -214,12 +207,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             .device
             .create_descriptor_pool(&descriptor_pool_info, None)
             .unwrap();
-        let desc_layout_bindings = [vk::DescriptorSetLayoutBinding {
-            descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
-            descriptor_count: 1,
-            stage_flags: vk::ShaderStageFlags::VERTEX,
-            ..Default::default()
-        }];
+        let desc_layout_bindings = [vk::DescriptorSetLayoutBinding::default()
+            .descriptor_type(vk::DescriptorType::UNIFORM_BUFFER)
+            .descriptor_count(1)
+            .stage_flags(vk::ShaderStageFlags::VERTEX)];
         let descriptor_info =
             vk::DescriptorSetLayoutCreateInfo::default().bindings(&desc_layout_bindings);
 
@@ -242,13 +233,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             range: size_of_val(&uniform_color_buffer_data) as u64,
         };
 
-        let write_desc_sets = [vk::WriteDescriptorSet {
-            dst_set: descriptor_sets[0],
-            descriptor_count: 1,
-            descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
-            p_buffer_info: &uniform_color_buffer_descriptor,
-            ..Default::default()
-        }];
+        let write_desc_sets = [vk::WriteDescriptorSet::default()
+            .dst_set(descriptor_sets[0])
+            .descriptor_count(1)
+            .descriptor_type(vk::DescriptorType::UNIFORM_BUFFER)
+            .buffer_info(std::slice::from_ref(&uniform_color_buffer_descriptor))];
         base.device.update_descriptor_sets(&write_desc_sets, &[]);
 
         // 7. Load compiled shaders and create the Graphics Pipeline
@@ -307,18 +296,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         let shader_entry_name = c"main";
         let shader_stage_create_infos = [
-            vk::PipelineShaderStageCreateInfo {
-                module: vertex_shader_module,
-                p_name: shader_entry_name.as_ptr(),
-                stage: vk::ShaderStageFlags::VERTEX,
-                ..Default::default()
-            },
-            vk::PipelineShaderStageCreateInfo {
-                module: fragment_shader_module,
-                p_name: shader_entry_name.as_ptr(),
-                stage: vk::ShaderStageFlags::FRAGMENT,
-                ..Default::default()
-            },
+            vk::PipelineShaderStageCreateInfo::default()
+                .module(vertex_shader_module)
+                .name(shader_entry_name)
+                .stage(vk::ShaderStageFlags::VERTEX),
+            vk::PipelineShaderStageCreateInfo::default()
+                .module(fragment_shader_module)
+                .name(shader_entry_name)
+                .stage(vk::ShaderStageFlags::FRAGMENT),
         ];
         let vertex_input_binding_descriptions = [vk::VertexInputBindingDescription {
             binding: 0,
@@ -335,10 +320,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             .vertex_attribute_descriptions(&vertex_input_attribute_descriptions)
             .vertex_binding_descriptions(&vertex_input_binding_descriptions);
 
-        let vertex_input_assembly_state_info = vk::PipelineInputAssemblyStateCreateInfo {
-            topology: vk::PrimitiveTopology::TRIANGLE_LIST,
-            ..Default::default()
-        };
+        let vertex_input_assembly_state_info = vk::PipelineInputAssemblyStateCreateInfo::default()
+            .topology(vk::PrimitiveTopology::TRIANGLE_LIST);
         let viewports = [vk::Viewport {
             x: 0.0,
             y: 0.0,
@@ -352,32 +335,26 @@ fn main() -> Result<(), Box<dyn Error>> {
             .scissors(&scissors)
             .viewports(&viewports);
 
-        let rasterization_info = vk::PipelineRasterizationStateCreateInfo {
-            front_face: vk::FrontFace::COUNTER_CLOCKWISE,
-            line_width: 1.0,
-            polygon_mode: vk::PolygonMode::FILL,
-            ..Default::default()
-        };
+        let rasterization_info = vk::PipelineRasterizationStateCreateInfo::default()
+            .front_face(vk::FrontFace::COUNTER_CLOCKWISE)
+            .line_width(1.0)
+            .polygon_mode(vk::PolygonMode::FILL);
 
         let multisample_state_info = vk::PipelineMultisampleStateCreateInfo::default()
             .rasterization_samples(vk::SampleCountFlags::TYPE_1);
 
-        let noop_stencil_state = vk::StencilOpState {
-            fail_op: vk::StencilOp::KEEP,
-            pass_op: vk::StencilOp::KEEP,
-            depth_fail_op: vk::StencilOp::KEEP,
-            compare_op: vk::CompareOp::ALWAYS,
-            ..Default::default()
-        };
-        let depth_state_info = vk::PipelineDepthStencilStateCreateInfo {
-            depth_test_enable: 1,
-            depth_write_enable: 1,
-            depth_compare_op: vk::CompareOp::LESS_OR_EQUAL,
-            front: noop_stencil_state,
-            back: noop_stencil_state,
-            max_depth_bounds: 1.0,
-            ..Default::default()
-        };
+        let noop_stencil_state = vk::StencilOpState::default()
+            .fail_op(vk::StencilOp::KEEP)
+            .pass_op(vk::StencilOp::KEEP)
+            .depth_fail_op(vk::StencilOp::KEEP)
+            .compare_op(vk::CompareOp::ALWAYS);
+        let depth_state_info = vk::PipelineDepthStencilStateCreateInfo::default()
+            .depth_test_enable(true)
+            .depth_write_enable(true)
+            .depth_compare_op(vk::CompareOp::LESS_OR_EQUAL)
+            .front(noop_stencil_state)
+            .back(noop_stencil_state)
+            .max_depth_bounds(1.0);
 
         let color_blend_attachment_states = [vk::PipelineColorBlendAttachmentState::default()
             .color_write_mask(
@@ -389,16 +366,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             .logic_op(vk::LogicOp::CLEAR)
             .attachments(&color_blend_attachment_states);
 
-        let cloud_color_blend_attachment_states = [vk::PipelineColorBlendAttachmentState {
-            blend_enable: 1, // Enable blending for clouds
-            src_color_blend_factor: vk::BlendFactor::SRC_ALPHA,
-            dst_color_blend_factor: vk::BlendFactor::ONE_MINUS_SRC_ALPHA,
-            color_blend_op: vk::BlendOp::ADD,
-            src_alpha_blend_factor: vk::BlendFactor::ONE,
-            dst_alpha_blend_factor: vk::BlendFactor::ZERO,
-            alpha_blend_op: vk::BlendOp::ADD,
-            color_write_mask: vk::ColorComponentFlags::RGBA,
-        }];
+        let cloud_color_blend_attachment_states = [vk::PipelineColorBlendAttachmentState::default()
+            .blend_enable(true) // Enable blending for clouds
+            .src_color_blend_factor(vk::BlendFactor::SRC_ALPHA)
+            .dst_color_blend_factor(vk::BlendFactor::ONE_MINUS_SRC_ALPHA)
+            .color_blend_op(vk::BlendOp::ADD)
+            .src_alpha_blend_factor(vk::BlendFactor::ONE)
+            .dst_alpha_blend_factor(vk::BlendFactor::ZERO)
+            .alpha_blend_op(vk::BlendOp::ADD)
+            .color_write_mask(vk::ColorComponentFlags::RGBA)];
         let cloud_color_blend_state = vk::PipelineColorBlendStateCreateInfo::default()
             .logic_op(vk::LogicOp::CLEAR)
             .attachments(&cloud_color_blend_attachment_states);
@@ -421,22 +397,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             .render_pass(renderpass);
 
         let cloud_shader_stage_create_infos = [
-            vk::PipelineShaderStageCreateInfo {
-                module: cloud_vertex_shader_module,
-                p_name: shader_entry_name.as_ptr(),
-                stage: vk::ShaderStageFlags::VERTEX,
-                ..Default::default()
-            },
-            vk::PipelineShaderStageCreateInfo {
-                module: cloud_fragment_shader_module,
-                p_name: shader_entry_name.as_ptr(),
-                stage: vk::ShaderStageFlags::FRAGMENT,
-                ..Default::default()
-            },
+            vk::PipelineShaderStageCreateInfo::default()
+                .module(cloud_vertex_shader_module)
+                .name(shader_entry_name)
+                .stage(vk::ShaderStageFlags::VERTEX),
+            vk::PipelineShaderStageCreateInfo::default()
+                .module(cloud_fragment_shader_module)
+                .name(shader_entry_name)
+                .stage(vk::ShaderStageFlags::FRAGMENT),
         ];
 
         let cloud_graphic_pipeline_infos = graphic_pipeline_infos
-            .clone()
             .stages(&cloud_shader_stage_create_infos)
             .color_blend_state(&cloud_color_blend_state);
 

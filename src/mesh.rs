@@ -11,7 +11,6 @@ pub fn generate_terrain() -> (Vec<Vertex>, Vec<u32>) {
     let mut vertices = Vec::with_capacity(width * depth);
     let mut indices = Vec::with_capacity((width - 1) * (depth - 1) * 6);
 
-    let w = 1.0;
     for z in 0..depth {
         for x in 0..width {
             let px = (x as f32 - width as f32 / 2.0) * scale;
@@ -20,7 +19,7 @@ pub fn generate_terrain() -> (Vec<Vertex>, Vec<u32>) {
             // Note: The height (pos.y) and color values are entirely computed in the vertex shader (shader/landscape.vert).
             // We only need to provide the X and Z grid coordinates here.
             vertices.push(Vertex {
-                pos: [px, 0.0, pz, w],
+                pos: [px, 0.0, pz, 1.0],
             });
         }
     }
@@ -58,14 +57,13 @@ pub fn generate_clouds() -> (Vec<Vertex>, Vec<u32>) {
     let mut vertices = Vec::with_capacity(width * depth);
     let mut indices = Vec::with_capacity((width - 1) * (depth - 1) * 6);
 
-    let w = 2.0;
     for z in 0..depth {
         for x in 0..width {
             let px = (x as f32 - width as f32 / 2.0) * scale;
             let pz = -(z as f32) * scale;
 
             vertices.push(Vertex {
-                pos: [px, 0.0, pz, w],
+                pos: [px, 0.0, pz, 2.0],
             });
         }
     }
