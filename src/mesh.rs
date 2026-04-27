@@ -1,13 +1,6 @@
 use crate::Vertex;
 
-pub fn generate_terrain() -> (Vec<Vertex>, Vec<u32>) {
-    // The mesh will have this many vertices per side
-    let width = 128;
-    let depth = 1024;
-
-    // The vertices will be spaced by this distance
-    let scale = 0.5;
-
+fn generate_mesh(width: usize, depth: usize, scale: f32, w: f32) -> (Vec<Vertex>, Vec<u32>) {
     let mut vertices = Vec::with_capacity(width * depth);
     let mut indices = Vec::with_capacity((width - 1) * (depth - 1) * 6);
 
@@ -16,10 +9,8 @@ pub fn generate_terrain() -> (Vec<Vertex>, Vec<u32>) {
             let px = (x as f32 - width as f32 / 2.0) * scale;
             let pz = -(z as f32) * scale;
 
-            // Note: The height (pos.y) and color values are entirely computed in the vertex shader (shader/landscape.vert).
-            // We only need to provide the X and Z grid coordinates here.
             vertices.push(Vertex {
-                pos: [px, 0.0, pz, 1.0],
+                pos: [px, 0.0, pz, w],
             });
         }
     }
@@ -46,6 +37,19 @@ pub fn generate_terrain() -> (Vec<Vertex>, Vec<u32>) {
     (vertices, indices)
 }
 
+pub fn generate_terrain() -> (Vec<Vertex>, Vec<u32>) {
+    // The mesh will have this many vertices per side
+    let width = 128;
+    let depth = 1024;
+
+    // The vertices will be spaced by this distance
+    let scale = 0.5;
+
+    // Note: The height (pos.y) and color values are entirely computed in the vertex shader (shader/landscape.vert).
+    // We only need to provide the X and Z grid coordinates here.
+    generate_mesh(width, depth, scale, 1.0)
+}
+
 pub fn generate_clouds() -> (Vec<Vertex>, Vec<u32>) {
     // The mesh will have this many vertices per side
     let width = 256;
@@ -54,40 +58,7 @@ pub fn generate_clouds() -> (Vec<Vertex>, Vec<u32>) {
     // The vertices will be spaced by this distance
     let scale = 1.0;
 
-    let mut vertices = Vec::with_capacity(width * depth);
-    let mut indices = Vec::with_capacity((width - 1) * (depth - 1) * 6);
-
-    for z in 0..depth {
-        for x in 0..width {
-            let px = (x as f32 - width as f32 / 2.0) * scale;
-            let pz = -(z as f32) * scale;
-
-            vertices.push(Vertex {
-                pos: [px, 0.0, pz, 2.0],
-            });
-        }
-    }
-
-    for z in 0..depth - 1 {
-        for x in 0..width - 1 {
-            let top_left = (z * width + x) as u32;
-            let top_right = top_left + 1;
-            let bottom_left = ((z + 1) * width + x) as u32;
-            let bottom_right = bottom_left + 1;
-
-            // First triangle
-            indices.push(top_left);
-            indices.push(bottom_left);
-            indices.push(top_right);
-
-            // Second triangle
-            indices.push(top_right);
-            indices.push(bottom_left);
-            indices.push(bottom_right);
-        }
-    }
-
-    (vertices, indices)
+    generate_mesh(width, depth, scale, 2.0)
 }
 
 #[cfg(test)]
