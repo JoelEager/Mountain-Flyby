@@ -23,14 +23,10 @@ fn generate_mesh(width: usize, depth: usize, scale: f32, w: f32) -> (Vec<Vertex>
             let bottom_right = bottom_left + 1;
 
             // First triangle
-            indices.push(top_left);
-            indices.push(bottom_left);
-            indices.push(top_right);
+            indices.extend_from_slice(&[top_left, bottom_left, top_right]);
 
             // Second triangle
-            indices.push(top_right);
-            indices.push(bottom_left);
-            indices.push(bottom_right);
+            indices.extend_from_slice(&[top_right, bottom_left, bottom_right]);
         }
     }
 
