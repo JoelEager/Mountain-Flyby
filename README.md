@@ -1,8 +1,7 @@
 # Mountain Flyby
 A procedurally generated graphics demo implemented in Rust. Uses [Vulkan](https://docs.vulkan.org/guide/latest/what_is_vulkan.html)
 and tested on an AMD RX 6750, though it should compatible with most GPUs. 
-Developed using [Google Jules](https://jules.google.com/). For an alternate 
-version that supports browsers see [this repo](https://github.com/JoelEager/Mountain-Flyby-WebGPU).
+Developed in part via [Google Jules](https://jules.google.com/).
 
 ## Setup
 The `ash` crate requires that the Vulkan API be present on the path. For 
@@ -24,5 +23,5 @@ glslangValidator -V shader/cloud.vert -o shader/cloud_vert.spv
 glslangValidator -V shader/cloud.frag -o shader/cloud_frag.spv
 ```
 
-## Preview
-![Gif recording of program running](recording.gif)
+## Gif recording
+![Procedurally generated mountains](recording.gif)
